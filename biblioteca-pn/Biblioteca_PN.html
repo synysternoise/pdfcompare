@@ -365,7 +365,7 @@ dialog::backdrop{background:rgba(15,20,30,.45);backdrop-filter:blur(2px)}
       <div class="search-results" id="qres" hidden></div>
     </div>
     <div class="top-actions">
-      <label class="switch" title="Ativar modo de edição"><input type="checkbox" id="editToggle"><span class="track"></span><span class="lbl">Modo edição</span></label>
+      <label class="switch" title="Ativar modo de edição (pede senha)"><input type="checkbox" id="editToggle"><span class="track"></span><span class="lbl">Modo edição</span></label>
       <div class="menu-wrap">
         <button class="btn" data-act="toggle-menu" aria-haspopup="true"><svg viewBox="0 0 24 24"><ellipse cx="12" cy="6" rx="8" ry="3"/><path d="M4 6v6c0 1.7 3.6 3 8 3s8-1.3 8-3V6M4 12v6c0 1.7 3.6 3 8 3s8-1.3 8-3v-6"/></svg><span class="lbl">Dados</span></button>
         <div class="menu" id="dataMenu" hidden>
@@ -374,6 +374,7 @@ dialog::backdrop{background:rgba(15,20,30,.45);backdrop-filter:blur(2px)}
           <button data-act="export-json"><svg viewBox="0 0 24 24"><path d="M8 4H7a2 2 0 0 0-2 2v4l-2 2 2 2v4a2 2 0 0 0 2 2h1M16 4h1a2 2 0 0 1 2 2v4l2 2-2 2v4a2 2 0 0 1-2 2h-1"/></svg><span>Exportar JSON<small>Backup completo da biblioteca</small></span></button>
           <hr>
           <button data-act="import"><svg viewBox="0 0 24 24"><path d="M12 20V9m-5 5 5-5 5 5M5 4h14"/></svg><span>Importar CSV ou JSON<small>CSV mescla · JSON substitui tudo</small></span></button>
+          <button data-act="change-password" class="edit-only"><svg viewBox="0 0 24 24"><rect x="5" y="11" width="14" height="10" rx="2"/><path d="M8 11V8a4 4 0 0 1 8 0v3"/></svg><span>Trocar senha de edição<small>Vale para quem usar este arquivo</small></span></button>
           <hr>
           <button data-act="reset" class="danger-item"><svg viewBox="0 0 24 24"><path d="M3 12a9 9 0 1 0 3-6.7L3 8"/><path d="M3 3v5h5"/></svg><span>Descartar alterações locais<small>Volta aos dados gravados neste arquivo</small></span></button>
         </div>
@@ -393,6 +394,7 @@ dialog::backdrop{background:rgba(15,20,30,.45);backdrop-filter:blur(2px)}
 {
  "version": 1,
  "updatedAt": "2026-11-05T00:00:00.000Z",
+ "editLock": {"salt": "d74a0ee62f1f2bcd0b631d9b44a96d2d", "iterations": 200000, "hash": "f00f7fa94c6f86d6358d489bc012debcd182025b2dbbe6866420df31a081a829"},
  "assemblies": [
   {"id": "overhead-bin", "name": "Overhead Bin", "description": ""}
  ],
@@ -891,7 +893,7 @@ function openForm(o) {
   const form = $('form', dlg), err = $('.form-error', form);
   $('[data-close]', form).onclick = () => dlg.close();
   if (o.onInput) { form.addEventListener('input', () => o.onInput(form)); o.onInput(form); }
-  form.onsubmit = ev => {
+  form.onsubmit = async ev => {
     ev.preventDefault();
     const v = {};
     for (const f of o.fields || []) {
@@ -901,7 +903,10 @@ function openForm(o) {
       if (f.required && !v[f.name]) { err.textContent = `Preencha o campo “${f.label}”.`; err.hidden = false; el.focus(); return; }
     }
     let res;
-    try { res = o.onSubmit(v, form); } catch (x) { res = String(x && x.message || x); }
+    const btn = $('[type=submit]', form);
+    btn.disabled = true;
+    try { res = await o.onSubmit(v, form); } catch (x) { res = String(x && x.message || x); }
+    btn.disabled = false;
     if (typeof res === 'string') { err.textContent = res; err.hidden = false; return; }
     dlg.close();
   };
@@ -923,7 +928,7 @@ function fieldHtml(f, vals) {
     ctl = `<textarea id="${id}" name="${f.name}" rows="3" placeholder="${esc(f.placeholder || '')}">${esc(v)}</textarea>`;
   } else {
     const list = f.list ? `<datalist id="${id}_l">${f.list.map(x => typeof x === 'string' ? `<option value="${esc(x)}"></option>` : `<option value="${esc(x.value)}">${esc(x.label || '')}</option>`).join('')}</datalist>` : '';
-    ctl = `<input id="${id}" name="${f.name}" value="${esc(v)}" ${f.list ? `list="${id}_l"` : ''} class="${f.mono ? 'mono' : ''}" ${f.readonly ? 'readonly' : ''} autocomplete="off" spellcheck="false" placeholder="${esc(f.placeholder || '')}">${list}`;
+    ctl = `<input id="${id}" name="${f.name}" type="${f.type === 'password' ? 'password' : 'text'}" value="${esc(v)}" ${f.list ? `list="${id}_l"` : ''} class="${f.mono ? 'mono' : ''}" ${f.readonly ? 'readonly' : ''} autocomplete="off" spellcheck="false" placeholder="${esc(f.placeholder || '')}">${list}`;
   }
   return `<label class="field ${f.half ? 'half' : ''}" for="${id}"><span class="field-label">${esc(f.label)}${f.required ? ' <i>*</i>' : ''}</span>${ctl}<span class="field-hint" data-hint="${f.name}">${esc(f.hint || '')}</span></label>`;
 }
@@ -951,6 +956,55 @@ function asmIdByName(name) {
     db.assemblies.push(a);
   }
   return a.id;
+}
+
+/* --- edit password --- */
+const UNLOCK_KEY = 'biblioteca-pn:unlock';
+const hex2buf = h => new Uint8Array(h.match(/../g).map(x => parseInt(x, 16)));
+const buf2hex = b => [...new Uint8Array(b)].map(x => x.toString(16).padStart(2, '0')).join('');
+async function pwHash(pwd, salt, iterations) {
+  const key = await crypto.subtle.importKey('raw', new TextEncoder().encode(pwd), 'PBKDF2', false, ['deriveBits']);
+  return buf2hex(await crypto.subtle.deriveBits({name: 'PBKDF2', hash: 'SHA-256', salt: hex2buf(salt), iterations}, key, 256));
+}
+const ssGet = k => { try { return sessionStorage.getItem(k); } catch (_) { return null; } };
+const ssSet = (k, v) => { try { sessionStorage.setItem(k, v); } catch (_) {} };
+let unlockedHash = ssGet(UNLOCK_KEY);
+const isUnlocked = () => !db.editLock || unlockedHash === db.editLock.hash;
+function requireUnlock(then) {
+  if (isUnlocked()) return then();
+  openForm({
+    title: 'Senha de edição',
+    subtitle: 'Só quem tem a senha pode alterar a biblioteca.',
+    submit: 'Liberar edição',
+    fields: [{name: 'pwd', label: 'Senha', type: 'password', required: true}],
+    onSubmit: async v => {
+      const L = db.editLock;
+      if (!window.crypto || !crypto.subtle) return 'Este navegador não consegue verificar a senha. Use o Edge ou o Chrome.';
+      if (await pwHash(v.pwd, L.salt, L.iterations) !== L.hash) return 'Senha incorreta.';
+      unlockedHash = L.hash; ssSet(UNLOCK_KEY, L.hash);
+      setTimeout(then, 0);
+    },
+  });
+}
+function setEditing(on) {
+  editing = on;
+  $('#editToggle').checked = on;
+  document.body.classList.toggle('editing', on);
+  renderMain(true);
+}
+function passwordForm() {
+  openForm({
+    title: 'Trocar senha de edição',
+    fields: [{name: 'p1', label: 'Nova senha', type: 'password', required: true}, {name: 'p2', label: 'Repita a nova senha', type: 'password', required: true}],
+    onSubmit: async v => {
+      if (v.p1.length < 4) return 'Use pelo menos 4 caracteres.';
+      if (v.p1 !== v.p2) return 'As duas senhas não são iguais.';
+      const salt = buf2hex(crypto.getRandomValues(new Uint8Array(16))), iterations = 200000;
+      db.editLock = {salt, iterations, hash: await pwHash(v.p1, salt, iterations)};
+      unlockedHash = db.editLock.hash; ssSet(UNLOCK_KEY, unlockedHash);
+      commit('Senha de edição alterada');
+    },
+  });
 }
 
 /* --- part --- */
@@ -1165,10 +1219,11 @@ const ACT = {
   'export-json': () => download(JSON.stringify(db, null, 2), `biblioteca-pn_${today()}.json`, 'application/json'),
   'export-csv': () => download(toCsv(), `biblioteca-pn_${today()}.csv`, 'text/csv;charset=utf-8'),
   'export-html': exportHtml,
-  'import': () => $('#fileInput').click(),
-  'reset': () => confirmBox('Descartar alterações locais?', 'Todas as alterações feitas neste navegador e ainda não salvas em um HTML serão perdidas. A biblioteca volta aos dados gravados neste arquivo.', 'Descartar', () => {
+  'import': () => requireUnlock(() => $('#fileInput').click()),
+  'change-password': () => requireUnlock(passwordForm),
+  'reset': () => requireUnlock(() => confirmBox('Descartar alterações locais?', 'Todas as alterações feitas neste navegador e ainda não salvas em um HTML serão perdidas. A biblioteca volta aos dados gravados neste arquivo.', 'Descartar', () => {
     lsDel(KEY); loadDb(); rebuild(); render(); toast('Dados do arquivo restaurados');
-  }),
+  })),
 };
 document.addEventListener('click', ev => {
   let b = ev.target.closest('[data-act]');
@@ -1279,6 +1334,7 @@ function importJson(text) {
   try { d = JSON.parse(text); } catch (_) { return toast('Arquivo JSON inválido', true); }
   if (!d || !Array.isArray(d.parts)) return toast('JSON não parece ser uma Biblioteca de PNs', true);
   confirmBox('Substituir a biblioteca?', `Os dados atuais serão <b>substituídos</b> pelo conteúdo do arquivo (${plural(d.parts.length, 'peça')}).`, 'Substituir', () => {
+    if (!d.editLock && db.editLock) d.editLock = db.editLock;
     db = normalize(d); commit('Biblioteca importada'); go('', '');
   });
 }
@@ -1315,7 +1371,11 @@ document.addEventListener('keydown', e => {
   if (!typing && (e.key === '/' || (e.key.toLowerCase() === 'k' && (e.ctrlKey || e.metaKey)))) { e.preventDefault(); $('#q').focus(); }
   if (e.key.toLowerCase() === 'k' && (e.ctrlKey || e.metaKey) && typing && !$('#dlg').open) { e.preventDefault(); $('#q').focus(); }
 });
-$('#editToggle').addEventListener('change', e => { editing = e.target.checked; document.body.classList.toggle('editing', editing); renderMain(true); });
+$('#editToggle').addEventListener('change', e => {
+  const on = e.target.checked;
+  if (on && !isUnlocked()) { e.target.checked = false; requireUnlock(() => setEditing(true)); return; }
+  setEditing(on);
+});
 document.addEventListener('keydown', e => {
   if ((e.key === 'Enter' || e.key === ' ') && e.target.matches && e.target.matches('.node[data-act]')) { e.preventDefault(); e.target.click(); }
 });

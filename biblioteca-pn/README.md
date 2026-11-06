@@ -28,7 +28,7 @@ de instalação, servidor nem internet.
 | Ver onde um inserto/parafuso é usado | Clique no PN do inserto ou parafuso para abrir a página com a seção **Onde é usado**. |
 | Copiar um PN | Passe o mouse sobre o PN e clique no ícone de copiar. |
 | Levar a tabela para o Excel | Na página da peça, use **Copiar tabela** e cole no Excel. |
-| Cadastrar ou editar | Ative o **Modo edição** (topo à direita). Aparecem os botões de adicionar, editar e excluir. |
+| Cadastrar ou editar | Ative o **Modo edição** (topo à direita) e digite a **senha de edição** (peça ao responsável pela biblioteca). Aparecem os botões de adicionar, editar e excluir. A senha vale até fechar a aba. |
 | Compartilhar com a equipe | **Dados › Salvar como HTML** gera um novo arquivo com os dados gravados dentro. Envie esse arquivo ou coloque no SharePoint. |
 
 ### Onde ficam os dados?
@@ -56,3 +56,11 @@ de instalação, servidor nem internet.
 > A importação aceita os dois formatos.
 
 **Backup completo:** use **Dados › Exportar JSON**. Ao importar um JSON, a biblioteca inteira é **substituída**.
+
+### Senha de edição
+
+- O **Modo edição**, **Importar** e **Descartar alterações** pedem a senha. Consultar não pede.
+- O arquivo guarda só uma impressão digital criptografada da senha (PBKDF2-SHA256), nunca a senha em si.
+- Para trocar: com o Modo edição ligado, **Dados › Trocar senha de edição**, depois **Salvar como HTML**.
+- A senha evita edições acidentais ou de quem não deve mexer. Quem souber editar código HTML consegue
+  contorná-la; a proteção de verdade é a permissão de escrita na pasta onde o arquivo oficial fica.
