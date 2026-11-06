@@ -15,6 +15,7 @@
   --screw:#7c3aed; --screw-soft:#f2ebfe; --screw-text:#6227c9;
   --ok:#12805c; --warn:#b54708; --warn-soft:#fef3e7;
   --danger:#d92d20; --danger-soft:#fdeceb;
+  --line:#aab4c3;
   --shadow:0 1px 2px rgba(16,24,40,.05),0 1px 3px rgba(16,24,40,.07);
   --shadow-lg:0 12px 32px rgba(16,24,40,.16),0 2px 6px rgba(16,24,40,.08);
   --mono:ui-monospace,"Cascadia Mono","Cascadia Code",Consolas,"SFMono-Regular",Menlo,monospace;
@@ -32,7 +33,7 @@
     --screw:#a98bff; --screw-soft:#2b2247; --screw-text:#c4b0ff;
     --ok:#3ccb8f; --warn:#f0a03c; --warn-soft:#3a2a14;
     --danger:#ff6b5e; --danger-soft:#3d1d1b;
-    --shadow:0 1px 2px rgba(0,0,0,.3); --shadow-lg:0 16px 40px rgba(0,0,0,.5);
+    --shadow:0 1px 2px rgba(0,0,0,.3); --shadow-lg:0 16px 40px rgba(0,0,0,.5); --line:#4a5468;
     color-scheme:dark;
   }
 }
@@ -46,7 +47,7 @@
   --screw:#a98bff; --screw-soft:#2b2247; --screw-text:#c4b0ff;
   --ok:#3ccb8f; --warn:#f0a03c; --warn-soft:#3a2a14;
   --danger:#ff6b5e; --danger-soft:#3d1d1b;
-  --shadow:0 1px 2px rgba(0,0,0,.3); --shadow-lg:0 16px 40px rgba(0,0,0,.5);
+  --shadow:0 1px 2px rgba(0,0,0,.3); --shadow-lg:0 16px 40px rgba(0,0,0,.5); --line:#4a5468;
   color-scheme:dark;
 }
 
@@ -210,36 +211,62 @@ main{overflow:auto;padding:28px 36px 80px;min-width:0}
 .empty b{display:block;color:var(--text);font-size:14.5px;margin-bottom:2px}
 .empty .btn{margin-top:12px}
 
-/* flow: part -> thread -> insert -> screws */
-.flow-root{display:flex;align-items:center;gap:10px;padding:10px 14px;border-radius:10px;background:var(--part-soft);color:var(--part-text);width:max-content;max-width:100%;font-weight:650}
-.flow-root .pn{font-size:14px}
-.tgroup{position:relative;margin-left:22px;padding-left:28px;padding-top:14px}
-.tgroup::before{content:"";position:absolute;left:0;top:0;bottom:22px;border-left:2px solid var(--border-strong)}
-.tgroup:last-child::before{bottom:auto;height:30px}
-.tgroup-head{display:flex;align-items:center;gap:10px;position:relative}
-.tgroup-head::before{content:"";position:absolute;left:-28px;top:50%;width:22px;border-top:2px solid var(--border-strong)}
-.tgroup-head .count{font-size:12.5px;color:var(--text-3)}
-.tgroup-body{display:grid;grid-template-columns:repeat(auto-fill,minmax(min(100%,350px),1fr));gap:14px;margin-top:12px}
-.icard{background:var(--surface);border:1px solid var(--border);border-radius:13px;box-shadow:var(--shadow);overflow:hidden;display:flex;flex-direction:column}
-.icard.is-pref{border-color:color-mix(in srgb,var(--insert) 55%,var(--border));box-shadow:0 0 0 3px color-mix(in srgb,var(--insert) 14%,transparent),var(--shadow)}
-.icard-head{display:flex;gap:12px;padding:14px 14px 12px 16px;align-items:flex-start}
-.icard-title{flex:1;min-width:0}
-.icard-title .row{display:flex;align-items:center;gap:6px;flex-wrap:wrap}
-.icard-title .pn-link{font-size:15.5px}
-.icard-actions{display:flex;gap:2px}
-.screws{border-top:1px solid var(--border);background:var(--surface-2);padding:10px 14px 12px 16px;flex:1}
-.label{font-size:10.5px;font-weight:700;letter-spacing:.07em;text-transform:uppercase;color:var(--text-3)}
-.screws ul{list-style:none;margin:6px 0 0;padding:0}
-.srow{display:flex;align-items:center;gap:8px;padding:7px 0;border-top:1px dashed var(--border);flex-wrap:wrap}
-.srow:first-child{border-top:0}
-.srow .pn-link{font-size:13.5px}
-.srow .desc{font-size:12.5px;color:var(--text-3);flex:1;min-width:120px}
-.empty-mini{font-size:12.5px;color:var(--text-3);padding:8px 0 2px;font-style:italic}
-.note{display:flex;gap:8px;font-size:12.5px;color:var(--text-2);padding:9px 16px;border-top:1px solid var(--border);background:var(--surface)}
-.note svg{width:15px;height:15px;color:var(--text-3);margin-top:2px}
-.add-inline{display:inline-flex;align-items:center;gap:5px;margin-top:8px;border:1px dashed var(--border-strong);background:transparent;border-radius:8px;padding:4px 10px;font-size:12.5px;font-weight:600;color:var(--text-2);cursor:pointer}
-.add-inline:hover{border-color:var(--accent);color:var(--accent-text);background:var(--accent-soft)}
-.add-inline svg{width:14px;height:14px}
+/* tree (organograma): conjunto -> peças -> INSERTO (rosca) -> insertos -> parafusos */
+.tree-card{background:var(--surface);border:1px solid var(--border);border-radius:14px;box-shadow:var(--shadow);margin-bottom:22px;min-width:0}
+.tree-bar{display:flex;align-items:center;gap:10px;padding:10px 14px;border-bottom:1px solid var(--border);flex-wrap:wrap}
+.tree-bar>svg{color:var(--text-3)}
+.tree-bar b{font-size:14.5px}
+.tree-bar .right{margin-left:auto;display:flex;gap:6px;align-items:center;flex-wrap:wrap}
+.tree-hint{display:flex;gap:8px;align-items:center;margin:12px 14px 0;padding:8px 12px;border-radius:9px;background:var(--surface-2);color:var(--text-2);font-size:12.5px}
+.tree-hint svg{width:15px;height:15px;color:var(--text-3)}
+.tree-scroll{overflow-x:auto;padding:22px 12px 30px;background-image:radial-gradient(var(--border) 1px,transparent 1px);background-size:18px 18px}
+.tree{width:max-content;min-width:100%}
+.tree ul{display:flex;justify-content:center;margin:0;padding:24px 0 0;position:relative}
+.tree>ul{padding-top:0}
+.tree li{list-style:none;display:flex;flex-direction:column;align-items:center;position:relative;padding:24px 7px 0}
+.tree>ul>li{padding-top:0}
+.tree li::before,.tree li::after{content:"";position:absolute;top:0;right:50%;width:50%;height:24px;border-top:2px solid var(--line)}
+.tree li::after{right:auto;left:50%;border-left:2px solid var(--line)}
+.tree li:first-child::before,.tree li:last-child::after{border:0 none}
+.tree li:last-child::before{border-right:2px solid var(--line);border-radius:0 10px 0 0}
+.tree li:first-child::after{border-radius:10px 0 0 0}
+.tree li:only-child::before{display:none}
+.tree li:only-child::after{border-top:0;border-radius:0}
+.tree>ul>li::before,.tree>ul>li::after{display:none}
+.tree ul ul::before{content:"";position:absolute;top:0;left:50%;height:24px;border-left:2px solid var(--line)}
+.node{position:relative;display:flex;flex-direction:column;align-items:center;gap:2px;min-width:150px;max-width:250px;padding:9px 16px 11px;border:1.5px solid var(--border-strong);border-radius:11px;background:var(--surface);box-shadow:var(--shadow);text-align:center;font:inherit;color:inherit;transition:border-color .12s,box-shadow .12s}
+.node[data-act]{cursor:pointer}
+.node[data-act]:hover{border-color:var(--accent)}
+.node:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+.node .nk{font-size:9.5px;font-weight:700;letter-spacing:.09em;text-transform:uppercase;color:var(--text-3)}
+.node .pn-link{font-size:14px}
+.node .ns{font-size:11.5px;color:var(--text-3);line-height:1.35}
+.node .ns.warn{color:var(--warn);font-weight:600}
+.node .ns svg{width:12px;height:12px;vertical-align:-2px;margin-right:3px}
+.node .chip{margin-top:3px}
+.node .nacts{display:flex;gap:2px;margin-top:4px}
+.node .caret{position:absolute;bottom:-10px;left:50%;transform:translateX(-50%);width:20px;height:20px;border-radius:50%;background:var(--surface);border:1.5px solid var(--border-strong);display:grid;place-items:center;font:700 13px/1 var(--mono);color:var(--text-2);z-index:1}
+.node.part.open{border:2px solid var(--accent);box-shadow:0 0 0 4px var(--accent-soft),var(--shadow)}
+.node.part.open .caret{border-color:var(--accent);color:var(--accent-text)}
+.node.thread{background:var(--insert-soft);border-color:color-mix(in srgb,var(--insert) 45%,var(--border));color:var(--insert-text);font-weight:750;letter-spacing:.03em;padding:10px 18px}
+.node.ins{border-color:color-mix(in srgb,var(--insert) 50%,var(--border))}
+.node.ins.open{border:2px solid var(--insert);box-shadow:0 0 0 4px color-mix(in srgb,var(--insert) 15%,transparent),var(--shadow)}
+.node.ins.open .caret{border-color:var(--insert);color:var(--insert-text)}
+.node.scr{border-color:color-mix(in srgb,var(--screw) 45%,var(--border))}
+.node.root{border:0;box-shadow:none;background:none;padding:2px 12px 8px;max-width:none}
+.node.root .root-t{font-size:24px;font-weight:800;letter-spacing:.02em;text-transform:uppercase;line-height:1.15}
+.node.root a.root-t:hover{color:var(--accent-text)}
+.node.empty{border-style:dashed;box-shadow:none;background:var(--surface-2);color:var(--text-3);font-size:12px;font-style:italic;min-width:130px}
+.node.ghost{border-style:dashed;box-shadow:none;background:var(--surface);color:var(--accent-text);font-weight:650;font-size:12.5px;flex-direction:row;justify-content:center;gap:5px;min-width:110px;cursor:pointer;border-color:color-mix(in srgb,var(--accent) 45%,var(--border))}
+.node.ghost:hover{background:var(--accent-soft)}
+.node.ghost svg{width:15px;height:15px}
+.node-go{position:absolute;top:4px;right:4px;width:24px;height:24px;border-radius:7px;display:grid;place-items:center;color:var(--text-3);opacity:0;transition:opacity .12s}
+.node-go svg{width:14px;height:14px}
+.node:hover .node-go,.node-go:focus-visible{opacity:1}
+.node-go:hover{background:var(--surface-3);color:var(--accent-text)}
+@media (hover:none){.node-go{opacity:.8}}
+.node .pref{position:absolute;top:-10px;left:-10px;width:22px;height:22px;border-radius:50%;background:var(--insert);color:#fff;display:grid;place-items:center;box-shadow:var(--shadow)}
+.node .pref svg{width:12px;height:12px;fill:currentColor;stroke:none}
 
 /* tables */
 .tbl-wrap{overflow:auto;border-radius:12px}
@@ -256,23 +283,6 @@ table.tbl{width:100%;border-collapse:collapse;font-size:13px}
 .rows li:first-child{border-top:0}
 .rows .sub{font-size:12.5px;color:var(--text-3)}
 .rows .end{margin-left:auto;display:flex;gap:6px;align-items:center;flex-wrap:wrap}
-
-/* part cards grid */
-.grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(min(100%,230px),1fr));gap:12px}
-.pcard{display:flex;flex-direction:column;gap:8px;background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:14px;box-shadow:var(--shadow);transition:border-color .12s,transform .12s,box-shadow .12s}
-.pcard:hover{border-color:var(--accent);transform:translateY(-1px);box-shadow:var(--shadow-lg)}
-.pcard-top{display:flex;align-items:center;gap:8px}
-.pcard-top .pn{font-weight:700;font-size:14.5px}
-.pcard-top .dot{margin-left:auto}
-.pcard .chips{display:flex;gap:5px;flex-wrap:wrap}
-.pcard .chips .chip{font-family:var(--mono);font-size:11px}
-.pcard .warnline{font-size:12px;color:var(--warn);font-weight:550}
-.asm-block{margin-bottom:28px}
-.asm-head{display:flex;align-items:center;gap:10px;margin-bottom:12px}
-.asm-head h3{margin:0;font-size:15px;font-weight:700}
-.asm-head h3 a:hover{color:var(--accent-text)}
-.asm-head .n{color:var(--text-3);font-size:13px}
-.asm-head .right{margin-left:auto;display:flex;gap:4px}
 
 /* ---------- edit mode ---------- */
 body:not(.editing) .edit-only{display:none!important}
@@ -336,7 +346,7 @@ dialog::backdrop{background:rgba(15,20,30,.45);backdrop-filter:blur(2px)}
   .app{display:block;height:auto}
   main{overflow:visible;padding:0}
   body{background:#fff}
-  .icard,.card,.stat,.pcard{box-shadow:none;break-inside:avoid}
+  .tree-card,.card,.stat,.node{box-shadow:none;break-inside:avoid}
 }
 </style>
 </head>
@@ -442,6 +452,7 @@ const I = {
   trash: '<svg viewBox="0 0 24 24"><path d="M4 7h16M10 11v6M14 11v6M6 7l1 13h10l1-13M9 7V4h6v3"/></svg>',
   copy: '<svg viewBox="0 0 24 24"><rect x="9" y="9" width="11" height="11" rx="2"/><path d="M5 15V6a2 2 0 0 1 2-2h8"/></svg>',
   star: '<svg viewBox="0 0 24 24"><path d="m12 3 2.8 5.7 6.2.9-4.5 4.4 1.1 6.2L12 17.3l-5.6 2.9 1.1-6.2L3 9.6l6.2-.9z"/></svg>',
+  go: '<svg viewBox="0 0 24 24"><path d="M7 17 17 7M9 7h8v8"/></svg>',
   chev: '<svg viewBox="0 0 24 24"><path d="m9 6 6 6-6 6"/></svg>',
   info: '<svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M12 11v5M12 8h.01"/></svg>',
   check: '<svg viewBox="0 0 24 24"><path d="m5 12 5 5 9-10"/></svg>',
@@ -547,14 +558,67 @@ function stat(icon, n, label, cls = '') {
 function emptyBox(icon, title, text, btn = '') {
   return `<div class="empty">${I[icon] || ''}<b>${esc(title)}</b><div>${text}</div>${btn}</div>`;
 }
-function partCard(p) {
+/* ---------------- tree (organograma) ---------------- */
+const openParts = new Set();   // peças expandidas nas árvores de conjunto
+const closedIns = new Set();   // insertos recolhidos ("PN|INSERTO")
+const goLink = (kind, pn) => `<a class="node-go" href="${href(kind, pn)}" title="Abrir detalhes de ${esc(pn)}" aria-label="Abrir detalhes">${I.go}</a>`;
+const treeWrap = lis => `<div class="tree-scroll"><div class="tree"><ul>${lis}</ul></div></div>`;
+const ghost = (act, data, label) => `<li><button class="node ghost" data-act="${act}" ${data}>${I.plus}${esc(label)}</button></li>`;
+function asmTree(id, withActions = true) {
+  const a = idx.asm.get(id);
+  const list = (idx.asmParts.get(id) || []).slice().sort((x, y) => cmp(x.pn, y.pn));
+  const name = a ? a.name : 'Sem conjunto';
+  const root = `<div class="node root">${a ? `<a class="root-t" href="${href('conjunto', id)}">${esc(name)}</a>` : `<span class="root-t">${esc(name)}</span>`}</div>`;
+  let kids = list.map(p => partLi(p, false)).join('');
+  if (!list.length && !editing) kids += `<li><div class="node empty">Nenhuma peça</div></li>`;
+  if (editing) kids += ghost('new-part', dattr({asm: a ? a.name : ''}), 'Peça');
+  const A = dattr({asm: id});
+  return `<div class="tree-card"><div class="tree-bar">${I.conjunto}<b>${esc(name)}</b><span class="faint small">${plural(list.length, 'peça')} · clique numa peça para abrir os insertos</span>
+    <div class="right">${a && withActions ? editBtn('edit-assembly', dattr({id}), 'Renomear conjunto') + delBtn('delete-assembly', dattr({id}), 'Excluir conjunto') : ''}
+    <button class="btn sm" data-act="tree-all" ${A} data-open="1">Expandir tudo</button><button class="btn sm ghost" data-act="tree-all" ${A} data-open="">Recolher</button></div></div>
+    ${treeWrap(`<li>${root}<ul>${kids}</ul></li>`)}</div>`;
+}
+function partLi(p, force) {
+  const open = force || openParts.has(p.pn);
   const n = p.inserts.length;
-  const ins = [...new Set(p.inserts.map(e => e.insert))];
-  return `<a class="pcard" href="${href('peca', p.pn)}">
-    <div class="pcard-top">${ico('peca', 'sm')}<span class="pn">${esc(p.pn)}</span><span class="dot ${n ? 'ok' : 'warn'}" title="${n ? 'Com indicação' : 'Sem inserto definido'}"></span></div>
-    ${p.description ? `<div class="small muted">${esc(p.description)}</div>` : ''}
-    ${n ? `<div class="chips">${ins.map(i => `<span class="chip">${esc(i)}</span>`).join('')}</div>` : `<div class="warnline">Sem inserto definido</div>`}
-  </a>`;
+  const P = dattr({part: p.pn});
+  const node = `<div class="node part ${open ? 'open' : ''}" ${force ? '' : `data-act="tree-part" ${P} role="button" tabindex="0" aria-expanded="${open}"`}>
+    <span class="nk">Peça</span>${force ? pnLink('peca', p.pn) : `<span class="pn-link peca">${esc(p.pn)}</span>${goLink('peca', p.pn)}`}
+    ${p.description ? `<span class="ns">${esc(p.description)}</span>` : ''}
+    <span class="ns ${n ? '' : 'warn'}">${n ? plural(n, 'inserto') : 'Sem inserto'}</span>
+    ${editing ? `<span class="nacts">${editBtn('edit-part', P, 'Editar peça')}${delBtn('delete-part', P, 'Excluir peça')}</span>` : ''}
+    ${force ? '' : `<span class="caret">${open ? '−' : '+'}</span>`}</div>`;
+  if (!open) return `<li>${node}</li>`;
+  const groups = new Map();
+  p.inserts.forEach(e => pushMap(groups, idx.ins.get(e.insert)?.thread || '—', e));
+  let kids = [...groups.keys()].sort(cmp).map(t =>
+    `<li><div class="node thread">INSERTO (${esc(t)})</div><ul>${groups.get(t).map(e => insLi(p, e)).join('')}</ul></li>`).join('');
+  if (!n && !editing) kids += `<li><div class="node empty">Nenhum inserto indicado</div></li>`;
+  if (editing) kids += ghost('add-entry', P, 'Inserto');
+  return `<li>${node}<ul>${kids}</ul></li>`;
+}
+function insLi(p, e) {
+  const key = p.pn + '|' + e.insert;
+  const open = !closedIns.has(key);
+  const ins = idx.ins.get(e.insert) || {};
+  const D = dattr({part: p.pn, ins: e.insert});
+  const node = `<div class="node ins ${open ? 'open' : ''}" data-act="tree-ins" ${dattr({key})} role="button" tabindex="0" aria-expanded="${open}">
+    ${e.preferred ? `<span class="pref" title="Preferencial (boa prática)">${I.star}</span>` : ''}
+    <span class="nk">Inserto${e.preferred ? ' · preferencial' : ''}</span><span class="pn-link inserto">${esc(e.insert)}</span>${goLink('inserto', e.insert)}
+    ${ins.description ? `<span class="ns">${esc(ins.description)}</span>` : ''}
+    ${e.note ? `<span class="ns">${I.info}${esc(e.note)}</span>` : ''}
+    ${editing ? `<span class="nacts">${editBtn('edit-entry', D, 'Editar indicação')}${delBtn('remove-entry', D, 'Remover inserto desta peça')}</span>` : ''}
+    <span class="caret">${open ? '−' : '+'}</span></div>`;
+  if (!open) return `<li>${node}</li>`;
+  let kids = e.screws.map(pn => {
+    const s = idx.scr.get(pn) || {};
+    return `<li><div class="node scr"><span class="nk">Parafuso</span>${pnLink('parafuso', pn)}${headChip(s.head)}
+      ${s.description ? `<span class="ns">${esc(s.description)}</span>` : ''}
+      ${editing ? `<span class="nacts">${delBtn('remove-entry-screw', dattr({part: p.pn, ins: e.insert, scr: pn}), 'Remover parafuso')}</span>` : ''}</div></li>`;
+  }).join('');
+  if (!e.screws.length && !editing) kids += `<li><div class="node empty">Sem parafuso indicado</div></li>`;
+  if (editing) kids += ghost('add-entry-screw', D, 'Parafuso');
+  return `<li>${node}<ul>${kids}</ul></li>`;
 }
 
 /* ---------------- views ---------------- */
@@ -581,15 +645,7 @@ function viewHome() {
     html += emptyBox('peca', 'Biblioteca vazia', 'Ative o <b>Modo edição</b> para cadastrar a primeira peça, ou importe um CSV em <b>Dados</b>.',
       `<button class="btn primary edit-only" data-act="new-part">${I.plus}Nova peça</button>`);
   }
-  for (const id of asmIds) {
-    const list = (idx.asmParts.get(id) || []).slice().sort((a, b) => cmp(a.pn, b.pn));
-    const a = idx.asm.get(id);
-    html += `<div class="asm-block"><div class="asm-head">${ico('conjunto', 'sm')}
-      <h3>${a ? `<a href="${href('conjunto', id)}">${esc(a.name)}</a>` : 'Sem conjunto'}</h3><span class="n">${plural(list.length, 'peça')}</span>
-      <div class="right">${a ? editBtn('edit-assembly', dattr({id}), 'Renomear conjunto') + delBtn('delete-assembly', dattr({id}), 'Excluir conjunto') : ''}</div></div>
-      ${list.length ? `<div class="grid">${list.map(partCard).join('')}</div>` : `<div class="empty-mini">Nenhuma peça neste conjunto.</div>`}
-    </div>`;
-  }
+  for (const id of asmIds) html += asmTree(id);
   if (noIns.length || noScr.length) {
     html += `<div class="section"><div class="section-head">${I.alert}<h2>Pendências</h2><span class="muted">itens que ainda precisam de indicação</span></div>
       <div class="card"><ul class="rows">
@@ -609,8 +665,7 @@ function viewAssembly(id) {
     hero('conjunto', a.name, {mono: false, desc: a.description,
       actions: `${editBtn('edit-assembly', dattr({id}), 'Editar conjunto')}${delBtn('delete-assembly', dattr({id}), 'Excluir conjunto')}<button class="btn primary edit-only" data-act="new-part">${I.plus}Nova peça</button>`}) +
     `<div class="stats">${stat('peca', list.length, 'peças')}${stat('inserto', withIns, 'com inserto indicado')}${stat('conjunto', list.length - withIns, 'sem indicação', list.length - withIns ? 'warn' : '')}</div>` +
-    (list.length ? `<div class="grid">${list.map(partCard).join('')}</div>`
-      : emptyBox('peca', 'Nenhuma peça', 'Ative o <b>Modo edição</b> para adicionar peças a este conjunto.'));
+    asmTree(id, false);
 }
 
 function viewPart(pn) {
@@ -618,63 +673,26 @@ function viewPart(pn) {
   if (!p) return notFound('Peça', pn);
   const a = idx.asm.get(p.assembly);
   const P = dattr({part: p.pn});
-  const groups = new Map();
-  p.inserts.forEach(e => pushMap(groups, idx.ins.get(e.insert)?.thread || '—', e));
-  const threads = [...groups.keys()].sort(cmp);
+  const threads = new Set(p.inserts.map(e => idx.ins.get(e.insert)?.thread).filter(Boolean));
   const screwSet = new Set(p.inserts.flatMap(e => e.screws));
-
   let html = crumbs([a ? {label: a.name, href: href('conjunto', a.id)} : {label: 'Sem conjunto'}, {label: p.pn}]) +
     hero('peca', p.pn, {desc: p.description, chips: a ? `<span class="chip">${esc(a.name)}</span>` : '',
       actions: `${editBtn('edit-part', P, 'Editar peça')}${delBtn('delete-part', P, 'Excluir peça')}`}) +
-    `<div class="stats">${stat('inserto', p.inserts.length, p.inserts.length === 1 ? 'inserto indicado' : 'insertos indicados')}${stat('conjunto', threads.filter(t => t !== '—').length, 'rosca(s)')}${stat('parafuso', screwSet.size, screwSet.size === 1 ? 'parafuso indicado' : 'parafusos indicados')}</div>`;
-
-  html += `<div class="section"><div class="section-head"><h2>Montagem recomendada</h2><span class="muted">peça → rosca → inserto → parafusos</span>
-    <div class="right"><button class="btn primary sm edit-only" data-act="add-entry" ${P}>${I.plus}Indicar inserto</button></div></div>`;
-  if (!p.inserts.length) {
-    html += emptyBox('inserto', 'Nenhum inserto indicado para esta peça',
-      '<span class="view-only">Ative o <b>Modo edição</b> (canto superior direito) para indicar o inserto e os parafusos.</span><span class="edit-only">Indique o inserto usado por boa prática nesta peça.</span>',
-      `<button class="btn primary edit-only" data-act="add-entry" ${P}>${I.plus}Indicar inserto</button>`);
-  } else {
-    html += `<div class="flow-root">${I.peca}<span class="pn">${esc(p.pn)}</span></div>`;
-    for (const t of threads) {
-      const es = groups.get(t);
-      html += `<div class="tgroup"><div class="tgroup-head"><span class="chip thread">Rosca ${esc(t)}</span><span class="count">${plural(es.length, 'inserto')}</span></div>
-        <div class="tgroup-body">${es.map(e => insertCard(p, e)).join('')}</div></div>`;
-    }
-    html += `</div><div class="section"><div class="section-head">${I.table}<h2>Combinações</h2><span class="muted">tabela para copiar e colar no Excel</span>
+    `<div class="stats">${stat('inserto', p.inserts.length, p.inserts.length === 1 ? 'inserto indicado' : 'insertos indicados')}${stat('conjunto', threads.size, 'rosca(s)')}${stat('parafuso', screwSet.size, screwSet.size === 1 ? 'parafuso indicado' : 'parafusos indicados')}</div>`;
+  html += `<div class="tree-card"><div class="tree-bar">${I.conjunto}<b>Montagem recomendada</b><span class="faint small">peça → inserto (rosca) → inserto → parafusos</span>
+    <div class="right"><button class="btn primary sm edit-only" data-act="add-entry" ${P}>${I.plus}Indicar inserto</button></div></div>
+    ${p.inserts.length ? '' : `<div class="tree-hint view-only">${I.info}<span>Nenhum inserto indicado ainda. Ative o <b>Modo edição</b> (canto superior direito) para indicar.</span></div>`}
+    ${treeWrap(partLi(p, true))}</div>`;
+  if (p.inserts.length) {
+    html += `<div class="section"><div class="section-head">${I.table}<h2>Combinações</h2><span class="muted">tabela para copiar e colar no Excel</span>
       <div class="right"><button class="btn sm" data-act="copy-table" ${P}>${I.copy}Copiar tabela</button></div></div>
       <div class="card tbl-wrap"><table class="tbl"><thead><tr><th>Rosca</th><th>Inserto</th><th></th><th>Parafuso</th><th>Cabeça</th></tr></thead><tbody>
       ${comboRows(p).map(r => `<tr><td>${threadChip(r.thread)}</td><td>${pnLink('inserto', r.insert)}</td><td>${r.preferred ? prefBadge() : ''}</td>
         <td>${r.screw ? pnLink('parafuso', r.screw) : '<span class="faint">—</span>'}</td><td>${headChip(r.head)}</td></tr>`).join('')}
-      </tbody></table></div>`;
+      </tbody></table></div></div>`;
   }
-  html += '</div>';
   if (p.notes) html += `<div class="section"><div class="section-head"><h2>Observações</h2></div><div class="card" style="padding:14px 16px;white-space:pre-wrap">${esc(p.notes)}</div></div>`;
   return html;
-}
-function insertCard(p, e) {
-  const ins = idx.ins.get(e.insert) || {pn: e.insert};
-  const D = dattr({part: p.pn, ins: e.insert});
-  return `<article class="icard ${e.preferred ? 'is-pref' : ''}">
-    <div class="icard-head">${ico('inserto')}
-      <div class="icard-title">
-        <div class="row">${pnLink('inserto', ins.pn)}${copyBtn(ins.pn)}${e.preferred ? prefBadge() : ''}</div>
-        <div class="small muted">${esc(ins.description || 'Inserto')}${ins.thread ? ' · rosca ' + esc(ins.thread) : ''}</div>
-      </div>
-      <div class="icard-actions">${editBtn('edit-entry', D, 'Editar indicação')}${delBtn('remove-entry', D, 'Remover inserto desta peça')}</div>
-    </div>
-    <div class="screws"><div class="label">Parafusos indicados</div>
-      ${e.screws.length ? `<ul>${e.screws.map(s => screwRow(p, e, s)).join('')}</ul>` : `<div class="empty-mini">Nenhum parafuso indicado ainda.</div>`}
-      <button class="add-inline edit-only" data-act="add-entry-screw" ${D}>${I.plus}Adicionar parafuso</button>
-    </div>
-    ${e.note ? `<div class="note">${I.info}<span>${esc(e.note)}</span></div>` : ''}
-  </article>`;
-}
-function screwRow(p, e, pn) {
-  const s = idx.scr.get(pn) || {pn};
-  return `<li class="srow">${ico('parafuso', 'sm')}${pnLink('parafuso', pn)}${copyBtn(pn)}${headChip(s.head)}
-    <span class="desc">${esc(s.description || '')}</span>
-    ${delBtn('remove-entry-screw', dattr({part: p.pn, ins: e.insert, scr: pn}), 'Remover parafuso')}</li>`;
 }
 function comboRows(p) {
   const rows = [];
@@ -805,13 +823,15 @@ function renderSideList() {
 }
 
 /* ---------------- main render ---------------- */
-function render() {
-  renderSidebar();
+function render() { renderSidebar(); renderMain(); }
+function renderMain(keepScroll) {
+  const keep = keepScroll ? $$('.tree-scroll').map(el => el.scrollLeft) : [];
   const r = route();
   const view = {peca: viewPart, inserto: viewInsert, parafuso: viewScrew, conjunto: viewAssembly}[r.kind];
   $('#main').innerHTML = `<div class="main-inner"><div class="edit-banner">${I.edit}Modo edição ativo — as alterações ficam salvas neste navegador. Use <b>Dados › Salvar como HTML</b> para compartilhar.</div>${view ? view(r.id) : viewHome()}</div>`;
   const t = view ? r.id : '';
   document.title = (t ? t + ' · ' : '') + 'Biblioteca de PNs';
+  $$('.tree-scroll').forEach((el, i) => { if (keep[i]) el.scrollLeft = keep[i]; });
 }
 
 /* ---------------- global search ---------------- */
@@ -934,11 +954,11 @@ function asmIdByName(name) {
 }
 
 /* --- part --- */
-function partForm(p) {
+function partForm(p, asmName) {
   const isNew = !p, r = route();
-  let defAsm = '';
-  if (isNew && r.kind === 'conjunto') defAsm = idx.asm.get(r.id)?.name || '';
-  if (isNew && r.kind === 'peca') defAsm = idx.asm.get(idx.part.get(r.id)?.assembly)?.name || '';
+  let defAsm = asmName || '';
+  if (isNew && !defAsm && r.kind === 'conjunto') defAsm = idx.asm.get(r.id)?.name || '';
+  if (isNew && !defAsm && r.kind === 'peca') defAsm = idx.asm.get(idx.part.get(r.id)?.assembly)?.name || '';
   openForm({
     title: isNew ? 'Nova peça' : 'Editar peça',
     fields: [
@@ -1092,7 +1112,15 @@ const ACT = {
     const rows = [['Peça', 'Rosca', 'Inserto', 'Preferencial', 'Parafuso', 'Cabeça'], ...comboRows(p).map(r => [r.part, r.thread, r.insert, r.preferred ? 'Sim' : '', r.screw, r.head])];
     copyText(rows.map(r => r.join('\t')).join('\n'), 'Tabela copiada — cole no Excel');
   },
-  'new-part': () => partForm(null),
+  'new-part': d => partForm(null, d.asm),
+  'tree-part': d => { openParts.has(d.part) ? openParts.delete(d.part) : openParts.add(d.part); renderMain(true); },
+  'tree-ins': d => { closedIns.has(d.key) ? closedIns.delete(d.key) : closedIns.add(d.key); renderMain(true); },
+  'tree-all': d => {
+    (idx.asmParts.get(d.asm) || []).forEach(p => {
+      if (d.open) { openParts.add(p.pn); p.inserts.forEach(e => closedIns.delete(p.pn + '|' + e.insert)); } else openParts.delete(p.pn);
+    });
+    renderMain(true);
+  },
   'edit-part': d => partForm(idx.part.get(d.part)),
   'delete-part': d => confirmBox('Excluir peça?', `A peça <b class="mono">${esc(d.part)}</b> e suas indicações serão removidas. Insertos e parafusos continuam no catálogo.`, 'Excluir', () => {
     db.parts = db.parts.filter(p => p.pn !== d.part); commit(`Peça ${d.part} excluída`); go('', '');
@@ -1143,7 +1171,10 @@ const ACT = {
   }),
 };
 document.addEventListener('click', ev => {
-  const b = ev.target.closest('[data-act]');
+  let b = ev.target.closest('[data-act]');
+  // A PN link inside a clickable tree node navigates instead of toggling the node.
+  const inner = ev.target.closest('a[href]');
+  if (b && inner && b !== inner && b.contains(inner)) b = null;
   if (!ev.target.closest('.menu-wrap') || (b && b.closest('.menu'))) $('#dataMenu').hidden = true;
   if (!ev.target.closest('.search')) closeSearch();
   if (!b) return;
@@ -1284,7 +1315,10 @@ document.addEventListener('keydown', e => {
   if (!typing && (e.key === '/' || (e.key.toLowerCase() === 'k' && (e.ctrlKey || e.metaKey)))) { e.preventDefault(); $('#q').focus(); }
   if (e.key.toLowerCase() === 'k' && (e.ctrlKey || e.metaKey) && typing && !$('#dlg').open) { e.preventDefault(); $('#q').focus(); }
 });
-$('#editToggle').addEventListener('change', e => { editing = e.target.checked; document.body.classList.toggle('editing', editing); });
+$('#editToggle').addEventListener('change', e => { editing = e.target.checked; document.body.classList.toggle('editing', editing); renderMain(true); });
+document.addEventListener('keydown', e => {
+  if ((e.key === 'Enter' || e.key === ' ') && e.target.matches && e.target.matches('.node[data-act]')) { e.preventDefault(); e.target.click(); }
+});
 window.addEventListener('hashchange', () => {
   const k = route().kind;
   if (k === 'peca' || k === 'conjunto') sideTab = 'pecas';

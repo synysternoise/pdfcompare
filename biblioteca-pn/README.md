@@ -15,6 +15,10 @@ Conjunto (ex.: Overhead Bin)
 
 ## Como usar
 
+A tela principal é uma **árvore de cima para baixo** (como um organograma): conjunto → peças →
+INSERTO (rosca) → insertos → parafusos. Clique numa peça para abrir os insertos; clique num inserto
+para recolher ou mostrar os parafusos. O ícone ↗ no canto de cada caixa abre a página de detalhes.
+
 É **um único arquivo**: `Biblioteca_PN.html`. Abra com um duplo clique (Edge/Chrome). Não precisa
 de instalação, servidor nem internet.
 
