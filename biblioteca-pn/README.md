@@ -4,7 +4,7 @@ Ferramenta de consulta (e cadastro) que mostra, para cada **peça (PN)**, qual *
 por boa prática e quais **parafusos** são indicados com esse inserto.
 
 ```
-Conjunto (ex.: Overhead Bin)
+Commodity (ex.: Overhead Bin)
 └── Peça            CDPA689
     └── Rosca       8-32
         ├── Inserto CDIN07-08-06  ★ preferencial (opcional)
@@ -15,7 +15,8 @@ Conjunto (ex.: Overhead Bin)
 
 ## Como usar
 
-A tela principal é uma **árvore de cima para baixo** (como um organograma): conjunto → peças →
+A tela inicial mostra um botão para cada **commodity** (OHBin, Galley, Lavatory, Windscreen, Wardrobe).
+Dentro de cada uma, as peças aparecem numa **árvore de cima para baixo** (como um organograma): commodity → peças →
 INSERTO (rosca) → insertos → parafusos. Clique numa peça para abrir os insertos; clique num inserto
 para recolher ou mostrar os parafusos. O ícone ↗ no canto de cada caixa abre a página de detalhes.
 
@@ -43,12 +44,13 @@ de instalação, servidor nem internet.
 1. **Dados › Exportar para Excel (CSV)**, ou use o arquivo `modelo_importacao.csv` deste repositório.
 2. Preencha **uma linha por combinação peça × inserto × parafuso**:
 
-   | Conjunto | PN Peça | Descrição Peça | PN Inserto | Rosca | Descrição Inserto | Preferencial | PN Parafuso | Cabeça | Descrição Parafuso | Observação |
+   | Commodity | PN Peça | Descrição Peça | PN Inserto | Rosca | Descrição Inserto | Preferencial | PN Parafuso | Cabeça | Descrição Parafuso | Observação |
    |---|---|---|---|---|---|---|---|---|---|---|
 
    - `Preferencial`: `Sim` ou vazio.
    - `Cabeça`: `CSK` (escareada), `PAN` (panela), `HEX`, `FIL`, `SOC`, `TRU`, `WAF` ou outro código.
-   - Uma peça sem inserto ainda pode ter só `Conjunto` e `PN Peça`.
+   - Uma peça sem inserto ainda pode ter só `Commodity` e `PN Peça`.
+   - Arquivos antigos com a coluna `Conjunto` também são aceitos.
 3. Salve como CSV (separador `;`) e use **Dados › Importar CSV ou JSON**.
    O CSV é **mesclado**: cria o que é novo e não apaga nada.
 
@@ -64,3 +66,9 @@ de instalação, servidor nem internet.
 - Para trocar: com o Modo edição ligado, **Dados › Trocar senha de edição**, depois **Salvar como HTML**.
 - A senha evita edições acidentais ou de quem não deve mexer. Quem souber editar código HTML consegue
   contorná-la; a proteção de verdade é a permissão de escrita na pasta onde o arquivo oficial fica.
+
+### Commodities e imagens
+
+- Cada commodity tem um desenho próprio. No Modo edição, use o lápis no botão da commodity para trocar o
+  nome, o nome curto do botão (ex.: `OHBin`), o desenho, ou colar uma **foto/print** (Ctrl+V) no lugar dele.
+- A imagem é reduzida e guardada dentro do próprio arquivo (não precisa de pasta de imagens).
