@@ -308,6 +308,18 @@ svg.art .as{fill:none;stroke:var(--accent);stroke-width:2.2;stroke-linecap:round
 
 /* 3D viewer */
 .v3d{position:relative;height:500px;overflow:hidden;background-color:var(--surface-2);background-image:radial-gradient(var(--border) 1px,transparent 1px);background-size:18px 18px}
+.v3d.has-model{display:flex}
+.v3d-tree{width:280px;flex:none;overflow:auto;border-right:1px solid var(--border);background:var(--surface);padding:8px;font-size:12.5px}
+.v3d-tree .label{padding:2px 6px 6px}
+.vt-row{display:flex;gap:6px;align-items:center;width:100%;border:0;background:none;text-align:left;padding:4px 6px;border-radius:6px;cursor:pointer;font:inherit;color:var(--text-2)}
+.vt-row:hover{background:var(--surface-3)}
+.vt-row.active{background:var(--accent-soft);color:var(--accent-text);font-weight:650}
+.vt-row svg{width:14px;height:14px;opacity:.7}
+.vt-row span{min-width:0;overflow-wrap:anywhere;font-family:var(--mono)}
+.v3d-stage{position:relative;flex:1;min-width:0}
+.v3d-sel{position:absolute;left:12px;top:10px;max-width:calc(100% - 24px);font-size:12.5px;padding:4px 10px;border-radius:999px;background:var(--surface);border:1px solid var(--border);color:var(--text-2);pointer-events:none;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.v3d-sel.on{background:var(--accent);border-color:var(--accent);color:#fff;font-weight:650;font-family:var(--mono)}
+@media (max-width:900px){.v3d.has-model{flex-direction:column}.v3d-tree{width:auto;max-height:120px;border-right:0;border-bottom:1px solid var(--border)}}
 .v3d canvas{width:100%;height:100%;display:block;touch-action:none;cursor:grab}
 .v3d canvas:active{cursor:grabbing}
 .v3d-drop{position:absolute;inset:10px;display:grid;place-items:center;text-align:center;color:var(--text-2);cursor:pointer;border:2px dashed var(--border-strong);border-radius:12px;padding:20px}
@@ -994,9 +1006,12 @@ async function load3dxml(file) {
   };
   const P = [], N = [], C = [], L = [];
   let parts = 0;
+  const nodes = [];
+  const mkNode = (name, parent) => { const n = {id: nodes.length, name, parent, children: [], ranges: []}; nodes.push(n); if (parent) parent.children.push(n); return n; };
   const add = (g, m) => {
-    if (!g || (!g.pos.length && !g.lines.length)) return;
+    if (!g || (!g.pos.length && !g.lines.length)) return null;
     parts++;
+    const start = P.length / 3;
     for (let i = 0; i < g.pos.length; i += 3) {
       const x = g.pos[i], y = g.pos[i + 1], z = g.pos[i + 2], a = g.nor[i], b = g.nor[i + 1], c = g.nor[i + 2];
       P.push(m[0] * x + m[3] * y + m[6] * z + m[9], m[1] * x + m[4] * y + m[7] * z + m[10], m[2] * x + m[5] * y + m[8] * z + m[11]);
@@ -1007,8 +1022,10 @@ async function load3dxml(file) {
       const x = g.lines[i], y = g.lines[i + 1], z = g.lines[i + 2];
       L.push(m[0] * x + m[3] * y + m[6] * z + m[9], m[1] * x + m[4] * y + m[7] * z + m[10], m[2] * x + m[5] * y + m[8] * z + m[11]);
     }
+    return P.length / 3 > start ? [start, P.length / 3 - start] : null;
   };
-  if (!isZip) add(parseRep(new TextDecoder().decode(buf)), M_ID);
+  const addTo = (node, g, m) => { const r = add(g, m); if (r) node.ranges.push(r); };
+  if (!isZip) addTo(mkNode(file.name, null), parseRep(new TextDecoder().decode(buf)), M_ID);
   else {
     // product structure: Reference3D / Instance3D (matrix) / ReferenceRep (file) / InstanceRep
     let rootName = '';
@@ -1028,27 +1045,31 @@ async function load3dxml(file) {
       for (const el of xmlAll(doc, 'Instance3D')) {
         const parent = kid(el, 'IsAggregatedBy'), child = kid(el, 'IsInstanceOf');
         const mt = numList((xmlKids(el, 'RelativeMatrix')[0] || {}).textContent);
-        pushMap(inst, parent, {child, m: mt.length === 12 ? [...mt] : M_ID});
+        pushMap(inst, parent, {child, name: el.getAttribute('name') || '', m: mt.length === 12 ? [...mt] : M_ID});
         instanced.add(child);
       }
       for (const el of xmlAll(doc, 'InstanceRep')) pushMap(instRep, kid(el, 'IsAggregatedBy'), kid(el, 'IsInstanceOf'));
       const refs = xmlAll(doc, 'Reference3D').map(r => r.getAttribute('id'));
       const ps = xmlAll(doc, 'ProductStructure')[0];
       const roots = ps && ps.getAttribute('root') ? [ps.getAttribute('root')] : refs.filter(id => !instanced.has(id));
-      const walk = async (id, m, depth) => {
+      const refName = new Map(xmlAll(doc, 'Reference3D').map(r => [r.getAttribute('id'), r.getAttribute('name') || '']));
+      const walk = async (id, m, depth, parent, iname) => {
         if (depth > 40) return;
-        for (const rid of instRep.get(id) || []) if (repFile.has(rid)) { add(await getRep(repFile.get(rid)), m); placed = true; }
-        for (const c of inst.get(id) || []) await walk(c.child, mMul(m, c.m), depth + 1);
+        const node = mkNode(refName.get(id) || iname || 'Componente', parent);
+        for (const rid of instRep.get(id) || []) if (repFile.has(rid)) { addTo(node, await getRep(repFile.get(rid)), m); placed = true; }
+        for (const c of inst.get(id) || []) await walk(c.child, mMul(m, c.m), depth + 1, node, c.name);
       };
-      for (const r of roots) await walk(r, M_ID, 0);
+      for (const r of roots) await walk(r, M_ID, 0, null, '');
     }
-    if (!placed) for (const e of entries) if (/\.3drep$/i.test(e.name)) add(await getRep(e.name), M_ID);
+    if (!placed) { nodes.length = 0; for (const e of entries) if (/\.3drep$/i.test(e.name)) addTo(mkNode(e.name.replace(/\.3drep$/i, ''), null), await getRep(e.name), M_ID); }
   }
   if (!P.length && !L.length) throw new Error('Não encontrei geometria tesselada neste arquivo. Passe-o no Inspetor 3DXML para conferir o tipo de exportação.');
   let min = [Infinity, Infinity, Infinity], max = [-Infinity, -Infinity, -Infinity];
   const grow = a => { for (let i = 0; i < a.length; i++) { const k = i % 3; if (a[i] < min[k]) min[k] = a[i]; if (a[i] > max[k]) max[k] = a[i]; } };
   grow(P); grow(L);
-  return {name: file.name, pos: new Float32Array(P), nor: new Float32Array(N), col: new Uint8Array(C), lines: new Float32Array(L),
+  const collect = n => { n.all = [...n.ranges]; for (const c of n.children) n.all.push(...collect(c)); n.children = n.children.filter(c => c.all.length); return n.all; };
+  nodes.filter(n => !n.parent).forEach(collect);
+  return {nodes, sel: -1, name: file.name, pos: new Float32Array(P), nor: new Float32Array(N), col: new Uint8Array(C), lines: new Float32Array(L),
     center: [(min[0] + max[0]) / 2, (min[1] + max[1]) / 2, (min[2] + max[2]) / 2], radius: Math.hypot(max[0] - min[0], max[1] - min[1], max[2] - min[2]) / 2 || 1, parts};
 }
 const rotX = a => { const c = Math.cos(a), s = Math.sin(a); return [1, 0, 0, 0, c, s, 0, -s, c]; };   // mat3 por colunas
@@ -1056,7 +1077,7 @@ const rotY = a => { const c = Math.cos(a), s = Math.sin(a); return [c, 0, -s, 0,
 const m3 = (a, b) => { const o = new Array(9); for (let c = 0; c < 3; c++) for (let r = 0; r < 3; r++) o[c * 3 + r] = a[r] * b[c * 3] + a[3 + r] * b[c * 3 + 1] + a[6 + r] * b[c * 3 + 2]; return o; };
 const Z_UP = rotX(-Math.PI / 2);   // CATIA: Z para cima
 const VIEWS = {iso: () => m3(rotX(0.45), m3(rotY(-0.7), Z_UP)), frente: () => Z_UP, topo: () => [1, 0, 0, 0, 1, 0, 0, 0, 1], lado: () => m3(rotY(-Math.PI / 2), Z_UP)};
-function createViewer(box, model) {
+function createViewer(box, model, onPick) {
   const canvas = document.createElement('canvas');
   box.appendChild(canvas);
   const gl = canvas.getContext('webgl', {antialias: true, alpha: true, premultipliedAlpha: false});
@@ -1064,13 +1085,13 @@ function createViewer(box, model) {
   const sh = (type, src) => { const o = gl.createShader(type); gl.shaderSource(o, src); gl.compileShader(o); return o; };
   const prog = gl.createProgram();
   gl.attachShader(prog, sh(gl.VERTEX_SHADER, 'attribute vec3 aP;attribute vec3 aN;attribute vec3 aC;uniform mat3 uR;uniform vec3 uCt;uniform vec3 uS;uniform vec2 uPan;varying vec3 vN;varying vec3 vC;void main(){vec3 v=uR*(aP-uCt);vN=uR*aN;vC=aC;gl_Position=vec4(v.x*uS.x+uPan.x,v.y*uS.y+uPan.y,-v.z*uS.z,1.0);}'));
-  gl.attachShader(prog, sh(gl.FRAGMENT_SHADER, 'precision mediump float;varying vec3 vN;varying vec3 vC;uniform vec4 uLine;void main(){if(uLine.a>0.5){gl_FragColor=vec4(uLine.rgb,1.0);}else{float d=abs(dot(normalize(vN),normalize(vec3(0.35,0.5,0.8))));gl_FragColor=vec4(vC*(0.38+0.62*d),1.0);}}'));
+  gl.attachShader(prog, sh(gl.FRAGMENT_SHADER, 'precision mediump float;varying vec3 vN;varying vec3 vC;uniform vec4 uLine;uniform vec4 uTint;void main(){if(uLine.a>0.5){gl_FragColor=vec4(uLine.rgb,1.0);}else{float d=abs(dot(normalize(vN),normalize(vec3(0.35,0.5,0.8))));gl_FragColor=vec4(mix(vC,uTint.rgb,uTint.a)*(0.38+0.62*d),1.0);}}'));
   gl.bindAttribLocation(prog, 0, 'aP'); gl.bindAttribLocation(prog, 1, 'aN'); gl.bindAttribLocation(prog, 2, 'aC');
   gl.linkProgram(prog); gl.useProgram(prog);
   const U = n => gl.getUniformLocation(prog, n);
   const mk = data => { const b = gl.createBuffer(); gl.bindBuffer(gl.ARRAY_BUFFER, b); gl.bufferData(gl.ARRAY_BUFFER, data, gl.STATIC_DRAW); return b; };
   const bP = mk(model.pos), bN = mk(model.nor), bC = mk(model.col), bL = mk(model.lines);
-  const st = {R: VIEWS.iso(), zoom: 1, pan: [0, 0], edges: true, dead: false};
+  const st = {R: VIEWS.iso(), zoom: 1, pan: [0, 0], edges: true, dead: false, sel: []};
   let raf = 0;
   const draw = () => {
     raf = 0;
@@ -1091,7 +1112,14 @@ function createViewer(box, model) {
       gl.enableVertexAttribArray(0); gl.bindBuffer(gl.ARRAY_BUFFER, bP); gl.vertexAttribPointer(0, 3, gl.FLOAT, false, 0, 0);
       gl.enableVertexAttribArray(1); gl.bindBuffer(gl.ARRAY_BUFFER, bN); gl.vertexAttribPointer(1, 3, gl.FLOAT, false, 0, 0);
       gl.enableVertexAttribArray(2); gl.bindBuffer(gl.ARRAY_BUFFER, bC); gl.vertexAttribPointer(2, 3, gl.UNSIGNED_BYTE, true, 0, 0);
+      gl.uniform4f(U('uTint'), 0.5, 0.52, 0.56, st.sel.length ? 0.55 : 0);   // com seleção, o resto fica acinzentado
       gl.drawArrays(gl.TRIANGLES, 0, model.pos.length / 3);
+      if (st.sel.length) {
+        gl.polygonOffset(0.2, 0.2); gl.depthFunc(gl.LEQUAL);
+        gl.uniform4f(U('uTint'), 0.16, 0.42, 1, 0.8);
+        for (const [a, n] of st.sel) gl.drawArrays(gl.TRIANGLES, a, n);
+        gl.depthFunc(gl.LESS);
+      }
       gl.disable(gl.POLYGON_OFFSET_FILL);
     }
     if (model.lines.length && (st.edges || !model.pos.length)) {
@@ -1107,8 +1135,31 @@ function createViewer(box, model) {
   const ptr = new Map();
   let pinch = 0;
   canvas.addEventListener('contextmenu', e => e.preventDefault());
-  canvas.addEventListener('pointerdown', e => { canvas.setPointerCapture(e.pointerId); ptr.set(e.pointerId, {x: e.clientX, y: e.clientY, pan: e.button !== 0 || e.shiftKey}); pinch = 0; });
-  const up = e => { ptr.delete(e.pointerId); pinch = 0; };
+  canvas.addEventListener('pointerdown', e => { canvas.setPointerCapture(e.pointerId); ptr.set(e.pointerId, {x: e.clientX, y: e.clientY, x0: e.clientX, y0: e.clientY, pan: e.button !== 0 || e.shiftKey}); pinch = 0; });
+  const pick = (cx, cy) => {
+    const rc = canvas.getBoundingClientRect(), nx = (cx - rc.left) / rc.width * 2 - 1, ny = 1 - (cy - rc.top) / rc.height * 2;
+    const asp = rc.width / rc.height, k = st.zoom * 0.9 / model.radius, sx = asp > 1 ? k / asp : k, sy = asp > 1 ? k : k * asp;
+    const R = st.R, c = model.center, p = model.pos, q = new Float64Array(9);
+    let best = -Infinity, hit = -1;
+    for (let i = 0; i < p.length; i += 9) {
+      for (let j = 0; j < 3; j++) {
+        const x = p[i + j * 3] - c[0], y = p[i + j * 3 + 1] - c[1], z = p[i + j * 3 + 2] - c[2];
+        q[j * 3] = (R[0] * x + R[3] * y + R[6] * z) * sx + st.pan[0]; q[j * 3 + 1] = (R[1] * x + R[4] * y + R[7] * z) * sy + st.pan[1]; q[j * 3 + 2] = R[2] * x + R[5] * y + R[8] * z;
+      }
+      const d = (q[4] - q[7]) * (q[0] - q[6]) + (q[6] - q[3]) * (q[1] - q[7]);
+      if (Math.abs(d) < 1e-12) continue;
+      const a = ((q[4] - q[7]) * (nx - q[6]) + (q[6] - q[3]) * (ny - q[7])) / d, b = ((q[7] - q[1]) * (nx - q[6]) + (q[0] - q[6]) * (ny - q[7])) / d, g = 1 - a - b;
+      if (a < 0 || b < 0 || g < 0) continue;
+      const z = a * q[2] + b * q[5] + g * q[8];
+      if (z > best) { best = z; hit = i / 3; }
+    }
+    return hit;
+  };
+  const up = e => {
+    const p = ptr.get(e.pointerId);
+    if (p && onPick && e.type === 'pointerup' && e.button === 0 && !p.pan && ptr.size === 1 && Math.hypot(e.clientX - p.x0, e.clientY - p.y0) < 5) onPick(pick(e.clientX, e.clientY));
+    ptr.delete(e.pointerId); pinch = 0;
+  };
   canvas.addEventListener('pointerup', up); canvas.addEventListener('pointercancel', up);
   canvas.addEventListener('pointermove', e => {
     const p = ptr.get(e.pointerId);
@@ -1130,6 +1181,7 @@ function createViewer(box, model) {
     view: name => { st.R = (VIEWS[name] || VIEWS.iso)(); st.zoom = 1; st.pan = [0, 0]; redraw(); },
     fit: () => { st.zoom = 1; st.pan = [0, 0]; redraw(); },
     toggleEdges: () => { st.edges = !st.edges; redraw(); return st.edges; },
+    select: ranges => { st.sel = ranges || []; redraw(); },
     destroy: () => { st.dead = true; ro.disconnect(); const x = gl.getExtension('WEBGL_lose_context'); if (x) x.loseContext(); },
   };
   redraw();
@@ -1140,7 +1192,8 @@ function v3dSection(p) {
   const vb = (v, label) => `<button class="btn sm ghost" data-act="v3d-view" data-view="${v}">${label}</button>`;
   return `<div class="section"><div class="section-head">${I.cube}<h2>Modelo 3D</h2><span class="muted">${m ? esc(m.name) : '3DXML tesselado, aberto deste computador'}</span>
     <div class="right">${m ? vb('iso', 'Iso') + vb('frente', 'Frente') + vb('topo', 'Topo') + vb('lado', 'Lado') + `<button class="btn sm ghost" data-act="v3d-edges">Arestas</button>` : ''}<button class="btn sm" data-act="v3d-open">${m ? 'Trocar arquivo' : 'Abrir 3DXML'}</button></div></div>
-    <div class="card v3d" id="v3d" data-part="${esc(p.pn)}">${m ? `<div class="v3d-info">${(m.pos.length / 9).toLocaleString('pt-BR')} triângulos · ${(m.lines.length / 6).toLocaleString('pt-BR')} linhas · ${plural(m.parts, 'corpo')}</div><div class="v3d-help">arrastar: girar · Shift ou botão direito: mover · rolagem: zoom · duplo clique: reenquadrar</div>`
+    <div class="card v3d ${m ? 'has-model' : ''}" id="v3d" data-part="${esc(p.pn)}">${m ? `<div class="v3d-tree" id="v3dTree"><div class="label">Componentes</div>${m.nodes.filter(n => !n.parent && n.all.length).map(n => vtRows(n, 0)).join('')}</div>
+      <div class="v3d-stage" id="v3dStage"><div class="v3d-sel" id="v3dSel"></div><div class="v3d-info">${(m.pos.length / 9).toLocaleString('pt-BR')} triângulos · ${plural(m.parts, 'corpo')}</div><div class="v3d-help">clique: selecionar · arrastar: girar · Shift ou botão direito: mover · rolagem: zoom</div></div>`
       : `<div class="v3d-drop" data-act="v3d-open" role="button" tabindex="0"><div><b>Arraste o .3dxml desta peça aqui</b>ou clique para escolher. O arquivo é lido só neste computador e não fica salvo na biblioteca.</div></div>`}</div></div>`;
 }
 function capSection(p) {
@@ -1199,12 +1252,29 @@ document.addEventListener('paste', async e => {
     commit('Captura adicionada. Use o lápis para dar um nome.');
   } catch (x) { toast(x.message, true); }
 });
+function vtRows(n, depth) {
+  return `<button class="vt-row" data-act="v3d-select" data-id="${n.id}" style="padding-left:${6 + depth * 14}px">${n.children.length ? I.conjunto : I.cube}<span>${esc(n.name)}</span></button>` + n.children.map(c => vtRows(c, depth + 1)).join('');
+}
+function v3dApplySel(m, scroll) {
+  const n = m.nodes[m.sel];
+  $$('#v3dTree .vt-row').forEach(b => b.classList.toggle('active', +b.dataset.id === m.sel));
+  if (v3d) v3d.select(n ? n.all : []);
+  const lab = $('#v3dSel');
+  if (lab) { lab.textContent = n ? n.name : 'Clique num componente no 3D ou na lista'; lab.classList.toggle('on', !!n); }
+  const act = scroll && $('#v3dTree .vt-row.active');
+  if (act) act.scrollIntoView({block: 'nearest'});
+}
 function mountV3d() {
   if (v3d) { v3d.destroy(); v3d = null; }
   const box = $('#v3d');
   const m = box && models.get(box.dataset.part);
   if (!m) return;
-  try { v3d = createViewer(box, m); } catch (x) { box.innerHTML = `<div class="v3d-drop"><div><b>Não consegui abrir o 3D</b>${esc(x.message)}</div></div>`; }
+  const onPick = vi => {
+    const hit = vi < 0 ? null : m.nodes.find(n => n.ranges.some(([a, c]) => vi >= a && vi < a + c));
+    m.sel = hit ? hit.id : -1;
+    v3dApplySel(m, true);
+  };
+  try { v3d = createViewer($('#v3dStage'), m, onPick); v3dApplySel(m, false); } catch (x) { box.innerHTML = `<div class="v3d-drop"><div><b>Não consegui abrir o 3D</b>${esc(x.message)}</div></div>`; }
 }
 async function v3dLoad(file) {
   const box = $('#v3d');
@@ -1665,6 +1735,7 @@ const ACT = {
     idx.part.get(d.part).captures.splice(+d.i, 1); commit('Captura excluída');
   }),
   'v3d-open': () => v3dInput.click(),
+  'v3d-select': d => { const b = $('#v3d'), m = b && models.get(b.dataset.part); if (!m) return; m.sel = m.sel === +d.id ? -1 : +d.id; v3dApplySel(m, false); },
   'v3d-view': d => { if (v3d) v3d.view(d.view); },
   'v3d-edges': () => { if (v3d) v3d.toggleEdges(); },
   'new-part': d => partForm(null, d.asm),
