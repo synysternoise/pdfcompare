@@ -88,6 +88,12 @@ kbd{font:11px var(--mono);border:1px solid var(--border-strong);border-bottom-wi
 main{overflow:auto;padding:28px 36px 80px;min-width:0}
 .main-inner{max-width:1180px;margin:0 auto}
 
+@media (min-width:901px){
+  .app.side-collapsed{grid-template-columns:0 minmax(0,1fr)}
+  .app.side-collapsed .sidebar{display:none}
+}
+.v3d.no-tree .v3d-tree{display:none}
+
 /* ---------- controls ---------- */
 .btn{display:inline-flex;align-items:center;gap:7px;height:34px;padding:0 13px;border-radius:9px;border:1px solid var(--border);background:var(--surface);cursor:pointer;font-weight:550;font-size:13.5px;white-space:nowrap;transition:background .12s,border-color .12s}
 .btn:hover{background:var(--surface-3)}
@@ -434,7 +440,7 @@ dialog::backdrop{background:rgba(15,20,30,.45);backdrop-filter:blur(2px)}
 <body>
 <div class="app" id="app">
   <header class="topbar">
-    <button class="icon-btn only-mobile" data-act="toggle-sidebar" title="Menu" aria-label="Abrir menu"><svg viewBox="0 0 24 24"><path d="M4 6h16M4 12h16M4 18h16"/></svg></button>
+    <button class="icon-btn" data-act="toggle-sidebar" title="Mostrar ou recolher a barra lateral" aria-label="Mostrar ou recolher a barra lateral"><svg viewBox="0 0 24 24"><path d="M4 6h16M4 12h16M4 18h16"/></svg></button>
     <a class="brand" href="#/" title="Início">
       <span class="brand-mark"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="8"/><circle cx="12" cy="12" r="3.2"/></svg></span>
       <span>Biblioteca de PNs<small>Insertos &amp; parafusos por peça</small></span>
@@ -450,6 +456,7 @@ dialog::backdrop{background:rgba(15,20,30,.45);backdrop-filter:blur(2px)}
       <div class="menu-wrap">
         <button class="btn" data-act="toggle-menu" aria-haspopup="true"><svg viewBox="0 0 24 24"><ellipse cx="12" cy="6" rx="8" ry="3"/><path d="M4 6v6c0 1.7 3.6 3 8 3s8-1.3 8-3V6M4 12v6c0 1.7 3.6 3 8 3s8-1.3 8-3v-6"/></svg><span class="lbl">Dados</span></button>
         <div class="menu" id="dataMenu" hidden>
+          <button data-act="connect-base"><svg viewBox="0 0 24 24"><path d="M3 7a2 2 0 0 1 2-2h4l2 2h8a2 2 0 0 1 2 2v8a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><path d="M12 11v5m-2.5-2.5L12 16l2.5-2.5"/></svg><span>Conectar pasta da base<small>Grava as alterações e os 3D direto na pasta deste arquivo</small></span></button>
           <button data-act="export-html"><svg viewBox="0 0 24 24"><path d="M12 4v11m-5-5 5 5 5-5M5 20h14"/></svg><span>Salvar como HTML<small>Arquivo único com os dados atuais — para compartilhar</small></span></button>
           <button data-act="export-csv"><svg viewBox="0 0 24 24"><rect x="4" y="3" width="16" height="18" rx="2"/><path d="M4 9h16M4 15h16M10 3v18"/></svg><span>Exportar para Excel (CSV)<small>Uma linha por peça × inserto × parafuso</small></span></button>
           <button data-act="export-json"><svg viewBox="0 0 24 24"><path d="M8 4H7a2 2 0 0 0-2 2v4l-2 2 2 2v4a2 2 0 0 0 2 2h1M16 4h1a2 2 0 0 1 2 2v4l2 2-2 2v4a2 2 0 0 1-2 2h-1"/></svg><span>Exportar JSON<small>Backup completo da biblioteca</small></span></button>
@@ -472,6 +479,8 @@ dialog::backdrop{background:rgba(15,20,30,.45);backdrop-filter:blur(2px)}
 <input type="file" id="fileInput" accept=".json,.csv,.txt" hidden>
 
 <!-- ===== DADOS DA BIBLIOTECA (editável pela interface; "Dados > Salvar como HTML" grava aqui) ===== -->
+<!-- Base na pasta: se existir base/dados.js ao lado deste arquivo, ele substitui os dados embutidos abaixo. -->
+<script src="base/dados.js"></script>
 <script id="seed-data" type="application/json">
 {
  "version": 1,
@@ -512,6 +521,7 @@ dialog::backdrop{background:rgba(15,20,30,.45);backdrop-filter:blur(2px)}
 const PRISTINE = '<!DOCTYPE html>\n' + document.documentElement.outerHTML;
 const KEY = 'biblioteca-pn:data:' + location.pathname;
 const THEME_KEY = 'biblioteca-pn:theme';
+const SIDE_KEY = 'biblioteca-pn:side';
 
 /* ---------------- helpers ---------------- */
 const $ = (s, r = document) => r.querySelector(s);
@@ -587,7 +597,8 @@ const HEADS = {CSK: 'Escareada', PAN: 'Panela', HEX: 'Sextavada', FIL: 'Cilíndr
 const THREADS = ['2-56', '4-40', '6-32', '8-32', '10-24', '10-32', '1/4-20', '1/4-28', 'M3', 'M4', 'M5', 'M6'];
 
 /* ---------------- data ---------------- */
-const SEED = JSON.parse($('#seed-data').textContent);
+const FROM_FOLDER = !!(window.BIBLIOTECA_DADOS && Array.isArray(window.BIBLIOTECA_DADOS.parts));
+let SEED = FROM_FOLDER ? window.BIBLIOTECA_DADOS : JSON.parse($('#seed-data').textContent);
 let db, idx, source = 'file', backedUp = false;
 let sideTab = 'pecas', sideFilter = '', editing = false;
 
@@ -638,6 +649,7 @@ function commit(msg) {
   else toast('Atenção: o navegador não conseguiu guardar (espaço cheio ou bloqueado). Use Dados › Salvar como HTML agora para não perder.', true);
   rebuild(); render();
   if (msg) toast(msg);
+  if (fs.ok) { clearTimeout(fs.timer); fs.timer = setTimeout(saveBase, 600); }
 }
 
 /* ---------------- routing ---------------- */
@@ -894,8 +906,137 @@ function notFound(kind, id) {
   return crumbs([{label: id}]) + emptyBox('alert', `${kind} não encontrado(a)`, `<span class="mono">${esc(id)}</span> não existe nesta biblioteca.`, `<a class="btn" href="#/">Voltar ao início</a>`);
 }
 
+/* ---------------- base na pasta (File System Access) ---------------- */
+// Pasta que contém este HTML. Dentro dela: base/dados.js e base/modelos/<PN>.js
+const fs = {dir: null, ok: false, pending: null, saving: false, again: false, override: false, savedAt: null, timer: 0, folder: FROM_FOLDER};
+const idb = (mode, fn) => new Promise(resolve => {
+  try {
+    const rq = indexedDB.open('biblioteca-pn', 1);
+    rq.onupgradeneeded = () => rq.result.createObjectStore('kv');
+    rq.onerror = () => resolve(null);
+    rq.onsuccess = () => {
+      try { const r = fn(rq.result.transaction('kv', mode).objectStore('kv')); r.onsuccess = () => resolve(r.result); r.onerror = () => resolve(null); }
+      catch (_) { resolve(null); }
+    };
+  } catch (_) { resolve(null); }
+});
+const DIR_KEY = 'dir:' + location.pathname;
+async function connectBase() {
+  if (!window.showDirectoryPicker) return toast('Este navegador não deixa salvar em pasta. Use o Edge ou o Chrome.', true);
+  let dir;
+  try { dir = await window.showDirectoryPicker({mode: 'readwrite'}); } catch (_) { return; }
+  const html = decodeURIComponent(location.pathname.split('/').pop() || '');
+  if (location.protocol === 'file:' && html) {
+    try { await dir.getFileHandle(html); }
+    catch (_) { return toast(`Pasta errada: escolha a pasta onde está o arquivo ${html}.`, true); }
+  }
+  fs.dir = dir; fs.ok = true; fs.pending = null;
+  idb('readwrite', st => st.put(dir, DIR_KEY));
+  await saveBase();
+  if (fs.ok && !fs.saving) toast('Pasta conectada. A partir de agora as alterações são gravadas em base/dados.js.');
+}
+async function saveBase() {
+  if (!fs.ok) return;
+  if (fs.saving) { fs.again = true; return; }
+  fs.saving = true; renderSidebar();
+  try {
+    const base = await fs.dir.getDirectoryHandle('base', {create: true});
+    const fh = await base.getFileHandle('dados.js', {create: true});
+    const cur = /"updatedAt":"([^"]+)"/.exec((await (await fh.getFile()).text()).slice(0, 400));
+    if (cur && cur[1] !== SEED.updatedAt && cur[1] !== db.updatedAt && !fs.override) {
+      fs.saving = false; renderSidebar();
+      confirmBox('A base foi alterada por outra pessoa', `O arquivo <b>base/dados.js</b> foi salvo em <b>${fmtDate(cur[1])}</b>, depois que você abriu esta página. Se continuar, as suas alterações <b>substituem</b> as dela. Para ver o que ela mudou, cancele e recarregue a página (as suas edições ficam guardadas em Dados › Recuperar edições antigas).`, 'Substituir pela minha versão', () => { fs.override = true; saveBase(); });
+      return;
+    }
+    const w = await fh.createWritable();
+    await w.write('window.BIBLIOTECA_DADOS = ' + JSON.stringify(db) + ';\n');
+    await w.close();
+    SEED = JSON.parse(JSON.stringify(db));
+    lsDel(KEY); source = 'file'; fs.folder = true; fs.savedAt = new Date(); fs.override = false;
+  } catch (x) {
+    if (x && x.name === 'NotAllowedError') { fs.pending = fs.dir; fs.ok = false; }
+    toast('Não consegui gravar na pasta: ' + (x && x.message || x) + ' As alterações continuam guardadas neste navegador.', true);
+  }
+  fs.saving = false; renderSidebar();
+  if (fs.again) { fs.again = false; saveBase(); }
+}
+// Reaproveita a pasta escolhida antes; o navegador pede a permissão de novo com um clique.
+function regrantBase() {
+  if (!fs.pending) return;
+  const h = fs.pending;
+  h.requestPermission({mode: 'readwrite'}).then(r => {
+    if (r !== 'granted') return;
+    fs.dir = h; fs.ok = true; fs.pending = null; renderSidebar();
+    if (source === 'local') saveBase();
+  }).catch(() => {});
+}
+function statusHtml() {
+  const box = (cls, dot, title, text, act) => `<${act ? 'button' : 'div'} class="status ${cls}" ${act ? `data-act="${act}"` : ''}><span class="dot ${dot}"></span><div><b>${title}</b><span>${text}</span></div></${act ? 'button' : 'div'}>`;
+  if (fs.saving) return box('', 'warn', 'Salvando na pasta…', 'base/dados.js');
+  if (source === 'local') {
+    if (fs.ok) return box('local', 'warn', 'Alterações ainda não gravadas', 'Clique para gravar na pasta agora.', 'save-base');
+    if (fs.pending) return box('local', 'warn', 'Alterações só neste navegador', 'Clique para liberar a pasta da base e gravar.', 'connect-base');
+    return window.showDirectoryPicker
+      ? box('local', 'warn', 'Alterações só neste navegador', 'Clique para conectar a pasta da base e gravar.', 'connect-base')
+      : box('local', 'warn', 'Alterações salvas só neste navegador', 'Clique para salvar um novo HTML e compartilhar.', 'export-html');
+  }
+  if (fs.ok) return box('', 'ok', 'Base na pasta, gravação automática', fs.savedAt ? 'Gravado às ' + fs.savedAt.toLocaleTimeString('pt-BR', {hour: '2-digit', minute: '2-digit'}) : 'Atualizada em ' + fmtDate(db.updatedAt));
+  return box('', 'ok', fs.folder ? 'Dados da pasta base' : 'Dados do arquivo', 'Atualizado em ' + fmtDate(db.updatedAt));
+}
+/* modelos 3D guardados em base/modelos/<PN>.js */
+const b64 = bytes => { let o = ''; for (let i = 0; i < bytes.length; i += 0x8000) o += String.fromCharCode.apply(null, bytes.subarray(i, i + 0x8000)); return btoa(o); };
+const unb64 = t => { const b = atob(t), o = new Uint8Array(b.length); for (let i = 0; i < b.length; i++) o[i] = b.charCodeAt(i); return o; };
+function encodeModel(m) {
+  const mn = [Infinity, Infinity, Infinity], mx = [-Infinity, -Infinity, -Infinity];
+  for (const a of [m.pos, m.lines]) for (let i = 0; i < a.length; i++) { const k = i % 3; if (a[i] < mn[k]) mn[k] = a[i]; if (a[i] > mx[k]) mx[k] = a[i]; }
+  const q16 = a => { const o = new Uint16Array(a.length); for (let i = 0; i < a.length; i++) { const k = i % 3; o[i] = Math.round((a[i] - mn[k]) / ((mx[k] - mn[k]) || 1) * 65535); } return b64(new Uint8Array(o.buffer)); };
+  const n8 = new Int8Array(m.nor.length);
+  for (let i = 0; i < n8.length; i++) n8[i] = Math.max(-127, Math.min(127, Math.round(m.nor[i] * 127)));
+  return {v: 1, name: m.name, parts: m.parts, min: mn, max: mx, pos: q16(m.pos), nor: b64(new Uint8Array(n8.buffer)), col: b64(m.col), lines: q16(m.lines),
+    nodes: m.nodes.map(n => ({n: n.name, p: n.parent ? n.parent.id : -1, r: n.ranges}))};
+}
+function decodeModel(d) {
+  const f = t => { const b = unb64(t), q = new Uint16Array(b.buffer, 0, b.length >> 1), o = new Float32Array(q.length); for (let i = 0; i < q.length; i++) { const k = i % 3; o[i] = d.min[k] + q[i] / 65535 * (d.max[k] - d.min[k]); } return o; };
+  const nb = new Int8Array(unb64(d.nor).buffer), nor = new Float32Array(nb.length);
+  for (let i = 0; i < nb.length; i++) nor[i] = nb[i] / 127;
+  const nodes = d.nodes.map((n, id) => ({id, name: n.n, parent: null, children: [], ranges: n.r, p: n.p}));
+  nodes.forEach(n => { if (n.p >= 0) { n.parent = nodes[n.p]; n.parent.children.push(n); } });
+  const collect = n => { n.all = [...n.ranges]; for (const c of n.children) n.all.push(...collect(c)); return n.all; };
+  nodes.filter(n => !n.parent).forEach(collect);
+  return {nodes, sel: -1, name: d.name, pos: f(d.pos), nor, col: unb64(d.col), lines: f(d.lines), parts: d.parts,
+    center: [(d.min[0] + d.max[0]) / 2, (d.min[1] + d.max[1]) / 2, (d.min[2] + d.max[2]) / 2], radius: Math.hypot(d.max[0] - d.min[0], d.max[1] - d.min[1], d.max[2] - d.min[2]) / 2 || 1};
+}
+async function saveModelFile(pn, m) {
+  const base = await fs.dir.getDirectoryHandle('base', {create: true});
+  const dir = await base.getDirectoryHandle('modelos', {create: true});
+  const file = pn.replace(/[^A-Za-z0-9._-]+/g, '_') + '.js';
+  const w = await (await dir.getFileHandle(file, {create: true})).createWritable();
+  await w.write('BIBLIOTECA_MODELO(' + JSON.stringify(pn) + ',' + JSON.stringify(encodeModel(m)) + ');\n');
+  await w.close();
+  return file;
+}
+const modelFail = new Set(), modelLoading = new Set();
+window.BIBLIOTECA_MODELO = (pn, d) => {
+  try { models.set(pn, decodeModel(d)); } catch (_) { modelFail.add(pn); }
+  modelLoading.delete(pn);
+  const b = $('#v3d');
+  if (b && b.dataset.part === pn) renderMain(true);
+};
+function loadStoredModel(p, box) {
+  if (modelFail.has(p.pn)) { box.querySelector('.v3d-drop div').innerHTML = `<b>O modelo 3D desta peça não está na pasta</b>Era esperado em base/modelos/${esc(p.model.file)}. Arraste o .3dxml aqui para abrir.`; return; }
+  box.querySelector('.v3d-drop div').innerHTML = '<b>Carregando o modelo 3D…</b>';
+  if (modelLoading.has(p.pn)) return;
+  modelLoading.add(p.pn);
+  const sc = document.createElement('script');
+  sc.src = 'base/modelos/' + encodeURIComponent(p.model.file) + '?v=' + encodeURIComponent(p.model.at || '');
+  sc.onload = () => sc.remove();
+  sc.onerror = () => { sc.remove(); modelLoading.delete(p.pn); modelFail.add(p.pn); const b = $('#v3d'); if (b && b.dataset.part === p.pn) renderMain(true); };
+  document.head.appendChild(sc);
+}
+
 /* ---------------- 3D viewer (3DXML tesselado) ---------------- */
-const models = new Map();          // PN -> modelo carregado nesta sessão (não é salvo)
+const models = new Map();          // PN -> modelo em memória (vem de base/modelos ou de um arquivo aberto na hora)
+let v3dNoTree = false;
 let v3d = null;                    // viewer montado na página atual
 function zipEntries(buf) {
   const dv = new DataView(buf.buffer, buf.byteOffset, buf.byteLength);
@@ -1216,10 +1357,10 @@ function v3dSection(p) {
   const m = models.get(p.pn);
   const vb = (v, label) => `<button class="btn sm ghost" data-act="v3d-view" data-view="${v}">${label}</button>`;
   return `<div class="section"><div class="section-head">${I.cube}<h2>Modelo 3D</h2><span class="muted">${m ? esc(m.name) : '3DXML tesselado, aberto deste computador'}</span>
-    <div class="right">${m ? vb('iso', 'Iso') + vb('frente', 'Frente') + vb('topo', 'Topo') + vb('lado', 'Lado') + `<button class="btn sm ghost" data-act="v3d-edges">Arestas</button>` : ''}<button class="btn sm" data-act="v3d-open">${m ? 'Trocar arquivo' : 'Abrir 3DXML'}</button></div></div>
-    <div class="card v3d ${m ? 'has-model' : ''}" id="v3d" data-part="${esc(p.pn)}">${m ? `<div class="v3d-tree" id="v3dTree"><div class="label">Componentes</div>${m.nodes.filter(n => !n.parent && n.all.length).map(n => vtRows(n, 0)).join('')}</div>
+    <div class="right">${m ? vb('iso', 'Iso') + vb('frente', 'Frente') + vb('topo', 'Topo') + vb('lado', 'Lado') + `<button class="btn sm ghost" data-act="v3d-edges">Arestas</button><button class="btn sm ghost" data-act="v3d-tree">Componentes</button>` : ''}${p.model ? `<button class="btn sm ghost edit-only" data-act="v3d-remove" data-part="${esc(p.pn)}">Remover 3D</button>` : ''}<button class="btn sm ${p.model ? 'edit-only' : ''}" data-act="v3d-open">${m || p.model ? 'Trocar arquivo' : 'Abrir 3DXML'}</button></div></div>
+    <div class="card v3d ${m ? 'has-model' : ''} ${v3dNoTree ? 'no-tree' : ''}" id="v3d" data-part="${esc(p.pn)}">${m ? `<div class="v3d-tree" id="v3dTree"><div class="label">Componentes</div>${m.nodes.filter(n => !n.parent && n.all.length).map(n => vtRows(n, 0)).join('')}</div>
       <div class="v3d-stage" id="v3dStage"><div class="v3d-sel" id="v3dSel"></div><div class="v3d-info">${(m.pos.length / 9).toLocaleString('pt-BR')} triângulos · ${plural(m.parts, 'corpo')}</div><div class="v3d-help">como no CATIA: meio = mover · meio + esquerdo = girar · meio + clique esquerdo e arrastar = zoom · clique = selecionar · duplo clique = centralizar</div></div>`
-      : `<div class="v3d-drop" data-act="v3d-open" role="button" tabindex="0"><div><b>Arraste o .3dxml desta peça aqui</b>ou clique para escolher. O arquivo é lido só neste computador e não fica salvo na biblioteca.</div></div>`}</div></div>`;
+      : `<div class="v3d-drop" data-act="v3d-open" role="button" tabindex="0"><div><b>Arraste o .3dxml desta peça aqui</b>ou clique para escolher. <span class="view-only">Aberto assim, o modelo vale só para esta sessão.</span><span class="edit-only">Com a pasta da base conectada, o modelo fica guardado nesta peça.</span></div></div>`}</div></div>`;
 }
 function capSection(p) {
   const caps = p.captures || [];
@@ -1293,7 +1434,11 @@ function mountV3d() {
   if (v3d) { v3d.destroy(); v3d = null; }
   const box = $('#v3d');
   const m = box && models.get(box.dataset.part);
-  if (!m) return;
+  if (!m) {
+    const p = box && idx.part.get(box.dataset.part);
+    if (p && p.model) loadStoredModel(p, box);
+    return;
+  }
   const onPick = (vi, focus) => {
     const hit = vi < 0 ? null : m.nodes.find(n => n.ranges.some(([a, c]) => vi >= a && vi < a + c));
     m.sel = hit ? hit.id : -1;
@@ -1307,7 +1452,18 @@ async function v3dLoad(file) {
   if (!file || !box) return;
   const pn = box.dataset.part;
   box.innerHTML = `<div class="v3d-drop"><div><b>Lendo ${esc(file.name)}…</b></div></div>`;
-  try { models.set(pn, await load3dxml(file)); renderMain(true); }
+  try {
+    const m = await load3dxml(file);
+    models.set(pn, m); modelFail.delete(pn);
+    const p = idx.part.get(pn);
+    if (editing && p) {
+      if (fs.ok) {
+        try { p.model = {file: await saveModelFile(pn, m), name: m.name, at: new Date().toISOString()}; commit('Modelo 3D guardado na pasta da base'); return; }
+        catch (x) { toast('Não consegui gravar o modelo na pasta: ' + (x && x.message || x), true); }
+      } else toast('Modelo aberto só nesta sessão. Para guardar na peça, conecte a pasta da base em Dados.', true);
+    }
+    renderMain(true);
+  }
   catch (x) { box.innerHTML = `<div class="v3d-drop" data-act="v3d-open" role="button" tabindex="0"><div><b>Não consegui abrir este arquivo</b>${esc(x && x.message || x)}<br>Clique para tentar outro.</div></div>`; }
 }
 document.addEventListener('dblclick', e => {
@@ -1349,9 +1505,7 @@ function renderSidebar() {
     insertos: `<button class="btn sm" data-act="new-insert">${I.plus}Inserto</button>`,
     parafusos: `<button class="btn sm" data-act="new-screw">${I.plus}Parafuso</button>`,
   }[sideTab];
-  $('#sideFoot').innerHTML = `<div class="row edit-only">${btns}</div>` + (source === 'local'
-    ? `<button class="status local" data-act="export-html" title="Salvar como HTML"><span class="dot warn"></span><div><b>Alterações salvas só neste navegador</b><span>Clique para salvar um novo HTML e compartilhar.</span></div></button>`
-    : `<div class="status"><span class="dot ok"></span><div><b>Dados do arquivo</b><span>Atualizado em ${fmtDate(db.updatedAt)}</span></div></div>`);
+  $('#sideFoot').innerHTML = `<div class="row edit-only">${btns}</div>` + statusHtml();
 }
 function renderSideList() {
   const r = route();
@@ -1574,6 +1728,7 @@ function requireUnlock(then) {
 }
 function setEditing(on) {
   editing = on;
+  if (on) regrantBase();
   $('#editToggle').checked = on;
   document.body.classList.toggle('editing', on);
   renderMain(true);
@@ -1747,7 +1902,11 @@ function assemblyForm(a) {
 /* ---------------- actions ---------------- */
 const getEntry = d => { const p = idx.part.get(d.part); return {p, e: p && p.inserts.find(x => x.insert === d.ins)}; };
 const ACT = {
-  'toggle-sidebar': () => $('#app').classList.toggle('side-open'),
+  'toggle-sidebar': () => {
+    const app = $('#app');
+    if (matchMedia('(max-width:900px)').matches) { app.classList.toggle('side-open'); return; }
+    lsSet(SIDE_KEY, app.classList.toggle('side-collapsed') ? '1' : '');
+  },
   'toggle-theme': () => {
     const root = document.documentElement;
     const dark = root.dataset.theme ? root.dataset.theme === 'dark' : matchMedia('(prefers-color-scheme: dark)').matches;
@@ -1767,6 +1926,12 @@ const ACT = {
   'view-capture': d => showCapture(idx.part.get(d.part), +d.i),
   'delete-capture': d => confirmBox('Excluir captura?', 'A imagem será removida desta peça.', 'Excluir', () => {
     idx.part.get(d.part).captures.splice(+d.i, 1); commit('Captura excluída');
+  }),
+  'connect-base': () => requireUnlock(connectBase),
+  'save-base': () => requireUnlock(saveBase),
+  'v3d-tree': () => { v3dNoTree = !v3dNoTree; const b = $('#v3d'); if (b) b.classList.toggle('no-tree', v3dNoTree); },
+  'v3d-remove': d => confirmBox('Remover o modelo 3D desta peça?', 'A peça deixa de abrir o 3D sozinha. O arquivo do modelo continua na pasta base/modelos.', 'Remover', () => {
+    const p = idx.part.get(d.part); delete p.model; models.delete(p.pn); commit('Modelo 3D removido da peça');
   }),
   'v3d-open': () => v3dInput.click(),
   'v3d-select': d => { const b = $('#v3d'), m = b && models.get(b.dataset.part); if (!m) return; m.sel = m.sel === +d.id ? -1 : +d.id; v3dApplySel(m, false); },
@@ -2006,13 +2171,22 @@ window.addEventListener('hashchange', () => {
 window.addEventListener('storage', ev => { if (ev.key === KEY) { loadDb(); rebuild(); render(); } });
 
 /* ---------------- boot ---------------- */
+if (lsGet(SIDE_KEY)) $('#app').classList.add('side-collapsed');
 const savedTheme = lsGet(THEME_KEY);
 if (savedTheme) document.documentElement.dataset.theme = savedTheme;
 loadDb(); rebuild();
 const k0 = route().kind;
 sideTab = k0 === 'inserto' ? 'insertos' : k0 === 'parafuso' ? 'parafusos' : 'pecas';
 render();
-if (backedUp) toast('O arquivo é mais novo que as edições salvas neste navegador. Elas foram guardadas em Dados › Recuperar edições antigas.', true);
+idb('readonly', st => st.get(DIR_KEY)).then(async h => {
+  if (!h || !h.queryPermission) return;
+  try {
+    if (await h.queryPermission({mode: 'readwrite'}) === 'granted') { fs.dir = h; fs.ok = true; if (source === 'local') saveBase(); }
+    else fs.pending = h;
+  } catch (_) { fs.pending = h; }
+  renderSidebar();
+});
+if (backedUp) toast('Os dados deste arquivo são mais novos que as edições salvas neste navegador. Elas foram guardadas em Dados › Recuperar edições antigas.', true);
 })();
 </script>
 </body>

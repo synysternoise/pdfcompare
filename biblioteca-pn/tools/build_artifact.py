@@ -4,6 +4,7 @@ def rep(a, b, s, count=1):
     assert s.count(a) == count, (a, s.count(a)); return s.replace(a, b)
 s = src
 # skeleton is added by the host
+s = rep('<script src="base/dados.js"></script>\n', '', s)   # a prévia não tem pasta da base
 s = rep('<!DOCTYPE html>\n<html lang="pt-BR">\n<head>\n<meta charset="utf-8">\n<meta name="viewport" content="width=device-width, initial-scale=1">\n', '', s)
 s = rep('</style>\n</head>\n<body>\n', '</style>\n', s)
 s = rep('</script>\n</body>\n</html>\n', '</script>\n', s)
@@ -21,8 +22,9 @@ s = rep("  if (!b) return;\n  const fn = ACT[b.dataset.act];",
         "  const ln = ev.target.closest('a[href^=\"#/\"]');\n  if (ln && !b) { ev.preventDefault(); nav(ln.getAttribute('href')); return; }\n  if (!b) return;\n  const fn = ACT[b.dataset.act];", s)
 # downloads are blocked in the viewer: hide exports
 s = re.sub(r'\s*<button data-act="export-html">.*?<hr>', '\n          <button data-act="copy-standalone"><svg viewBox="0 0 24 24"><rect x="9" y="9" width="11" height="11" rx="2"/><path d="M5 15V6a2 2 0 0 1 2-2h8"/></svg><span>Copiar código HTML<small>Para colar no Bloco de Notas e usar em outro PC</small></span></button><hr>', s, count=1, flags=re.S)
-s = rep('<button class="status local" data-act="export-html" title="Salvar como HTML">', '<button class="status local" title="Edições locais">', s)
-s = rep('Clique para salvar um novo HTML e compartilhar.', 'Ficam só neste navegador (prévia).', s)
+s = re.sub(r'\s*<button data-act="connect-base">.*?</button>', '', s, count=1, flags=re.S)   # sem pasta na prévia
+s = rep("return window.showDirectoryPicker\n      ? box(", "return false\n      ? box(", s)
+s = rep("box('local', 'warn', 'Alterações salvas só neste navegador', 'Clique para salvar um novo HTML e compartilhar.', 'export-html')", "box('local', 'warn', 'Alterações salvas só neste navegador', 'Prévia online: as edições não saem daqui.')", s)
 s = rep('Use <b>Dados › Salvar como HTML</b> para compartilhar.', 'Na prévia, as edições ficam só neste navegador.', s)
 assert 'data-act="export-html"' not in s.split('<script>')[0]
 # --- copy-standalone: the original offline file, with the current data, to the clipboard ---

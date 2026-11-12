@@ -87,3 +87,25 @@ de instalação, servidor nem internet.
   **Adicionar captura**. Dê um nome a cada vista pelo lápis.
 - Quem consulta clica na miniatura para ampliar; clicar na imagem ampliada mostra em tamanho real.
 - As capturas ficam salvas na biblioteca. O navegador guarda em torno de 5 MB; use **Salvar como HTML** com frequência.
+
+## Base na pasta (dados e modelos 3D gravados ao lado do HTML)
+
+```
+Biblioteca_PN\
+   Biblioteca_PN.html
+   base\
+      dados.js            <- todas as peças, insertos, parafusos, commodities, capturas
+      modelos\
+         CDPA689.js       <- modelo 3D de cada peça
+```
+
+- Se a pasta `base` estiver **ao lado do HTML**, a biblioteca lê tudo sozinha, em qualquer PC ou na rede.
+  Copie ou mova **a pasta inteira**; o HTML sozinho abre só com os dados embutidos.
+- **Primeira vez (quem edita):** ligue o Modo edição › **Dados › Conectar pasta da base** › escolha a pasta onde
+  está o `Biblioteca_PN.html` › permita a gravação. A pasta `base` é criada na hora.
+- **Depois disso:** cada alteração é gravada sozinha em `base/dados.js` (o aviso no rodapé da barra lateral mostra
+  "Gravado às HH:MM"). Ao abrir de novo, ligar o Modo edição faz o navegador pedir a permissão com um clique.
+- **Modelo 3D:** com a pasta conectada e o Modo edição ligado, arraste o `.3dxml` tesselado na peça. Ele é
+  convertido e guardado em `base/modelos`; daí em diante abre sozinho para todos.
+- **Duas pessoas editando:** se alguém gravou depois que você abriu a página, a biblioteca avisa antes de substituir.
+- Quem só consulta não precisa conectar nada nem saber a senha.

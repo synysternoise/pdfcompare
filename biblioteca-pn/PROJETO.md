@@ -56,6 +56,16 @@ Tudo num IIFE, JavaScript puro, sem framework. Renderização por *template stri
   `triangles/strips/fans`, cores, polilinhas) e `createViewer` (WebGL 1 escrito à mão, projeção ortográfica).
   Controles iguais aos do CATIA: meio = mover, meio + esquerdo/direito = girar, meio + clique = zoom.
 
+## Base na pasta
+
+- `<script src="base/dados.js">` (antes do `seed-data`) define `window.BIBLIOTECA_DADOS`; se existir, substitui os
+  dados embutidos (`FROM_FOLDER`, `SEED`). Modelos: `base/modelos/<PN>.js` chama `BIBLIOTECA_MODELO(pn, dados)` e é
+  carregado sob demanda por `<script>` dinâmico (`loadStoredModel`). `p.model = {file, name, at}` marca a peça.
+- Gravação: File System Access API. `connectBase()` pede a pasta do HTML, `saveBase()` grava `dados.js` após cada
+  `commit()` (com checagem de conflito pelo `updatedAt`), `saveModelFile()` grava o modelo compactado
+  (`encodeModel`: posições em uint16 relativas à caixa, normais int8, base64). O handle da pasta fica no IndexedDB.
+- Teste: sirva o HTML por `python3 -m http.server` e troque `showDirectoryPicker` por `navigator.storage.getDirectory()`.
+
 ## Design (manter exatamente este padrão)
 
 - **Tokens de cor em `:root`**, redefinidos para o tema escuro em `@media (prefers-color-scheme: dark)` com
@@ -105,8 +115,7 @@ Nunca gravar a saída dentro do repositório.
 
 - Lista completa de commodities (o usuário vai enviar) e desenho de cada uma; refazer o desenho do **Lavatory**
   a partir de uma referência real.
-- **Pasta na rede**: `Biblioteca_PN.html` + `dados.js` + `imagens/` numa pasta compartilhada, com "Salvar na
-  rede" pela File System Access API e aviso de conflito. Destrava: guardar o modelo 3D por peça e mais capturas.
-- Guardar o modelo 3D na peça (hoje é aberto na hora e não fica salvo).
+- Confirmar no PC do usuário que a política da empresa permite a gravação na pasta (File System Access).
+- Tirar as imagens (capturas, fotos de commodity) de dentro do `dados.js` para arquivos em `base/imagens`.
 - Link "Abrir no Windchill" por PN (falta o formato do endereço).
 - Mapa de insertos: pinos sobre a imagem da peça indicando onde vai cada inserto.
