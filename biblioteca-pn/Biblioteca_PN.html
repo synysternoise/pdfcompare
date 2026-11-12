@@ -89,7 +89,7 @@ main{overflow:auto;padding:28px 36px 80px;min-width:0}
 .main-inner{max-width:1180px;margin:0 auto}
 
 @media (min-width:901px){
-  .app.side-collapsed{grid-template-columns:0 minmax(0,1fr)}
+  .app.side-collapsed{grid-template-columns:minmax(0,1fr)}
   .app.side-collapsed .sidebar{display:none}
 }
 .v3d.no-tree .v3d-tree{display:none}
@@ -1355,12 +1355,15 @@ function createViewer(box, model, onPick) {
 }
 function v3dSection(p) {
   const m = models.get(p.pn);
+  // Sem modelo: quem consulta não vê nada; quem edita vê só o botão para ligar um 3DXML a este PN.
+  if (!m && !p.model) return editing ? `<div class="section"><div class="section-head">${I.cube}<h2>Modelo 3D</h2><span class="muted">${esc(p.pn)} ainda não tem modelo</span>
+    <div class="right"><button class="btn primary sm" data-act="v3d-open">${I.plus}Adicionar 3DXML a ${esc(p.pn)}</button></div></div><div id="v3d" data-part="${esc(p.pn)}" hidden></div></div>` : '';
   const vb = (v, label) => `<button class="btn sm ghost" data-act="v3d-view" data-view="${v}">${label}</button>`;
   return `<div class="section"><div class="section-head">${I.cube}<h2>Modelo 3D</h2><span class="muted">${m ? esc(m.name) : '3DXML tesselado, aberto deste computador'}</span>
     <div class="right">${m ? vb('iso', 'Iso') + vb('frente', 'Frente') + vb('topo', 'Topo') + vb('lado', 'Lado') + `<button class="btn sm ghost" data-act="v3d-edges">Arestas</button><button class="btn sm ghost" data-act="v3d-tree">Componentes</button>` : ''}${p.model ? `<button class="btn sm ghost edit-only" data-act="v3d-remove" data-part="${esc(p.pn)}">Remover 3D</button>` : ''}<button class="btn sm ${p.model ? 'edit-only' : ''}" data-act="v3d-open">${m || p.model ? 'Trocar arquivo' : 'Abrir 3DXML'}</button></div></div>
     <div class="card v3d ${m ? 'has-model' : ''} ${v3dNoTree ? 'no-tree' : ''}" id="v3d" data-part="${esc(p.pn)}">${m ? `<div class="v3d-tree" id="v3dTree"><div class="label">Componentes</div>${m.nodes.filter(n => !n.parent && n.all.length).map(n => vtRows(n, 0)).join('')}</div>
       <div class="v3d-stage" id="v3dStage"><div class="v3d-sel" id="v3dSel"></div><div class="v3d-info">${(m.pos.length / 9).toLocaleString('pt-BR')} triângulos · ${plural(m.parts, 'corpo')}</div><div class="v3d-help">como no CATIA: meio = mover · meio + esquerdo = girar · meio + clique esquerdo e arrastar = zoom · clique = selecionar · duplo clique = centralizar</div></div>`
-      : `<div class="v3d-drop" data-act="v3d-open" role="button" tabindex="0"><div><b>Arraste o .3dxml desta peça aqui</b>ou clique para escolher. <span class="view-only">Aberto assim, o modelo vale só para esta sessão.</span><span class="edit-only">Com a pasta da base conectada, o modelo fica guardado nesta peça.</span></div></div>`}</div></div>`;
+      : `<div class="v3d-drop" style="cursor:default"><div></div></div>`}</div></div>`;
 }
 function capSection(p) {
   const caps = p.captures || [];
@@ -1464,7 +1467,7 @@ async function v3dLoad(file) {
     }
     renderMain(true);
   }
-  catch (x) { box.innerHTML = `<div class="v3d-drop" data-act="v3d-open" role="button" tabindex="0"><div><b>Não consegui abrir este arquivo</b>${esc(x && x.message || x)}<br>Clique para tentar outro.</div></div>`; }
+  catch (x) { toast('Não consegui abrir este 3DXML: ' + (x && x.message || x), true); renderMain(true); }
 }
 document.addEventListener('dblclick', e => {
   const row = e.target.closest && e.target.closest('.vt-row');
@@ -1933,7 +1936,10 @@ const ACT = {
   'v3d-remove': d => confirmBox('Remover o modelo 3D desta peça?', 'A peça deixa de abrir o 3D sozinha. O arquivo do modelo continua na pasta base/modelos.', 'Remover', () => {
     const p = idx.part.get(d.part); delete p.model; models.delete(p.pn); commit('Modelo 3D removido da peça');
   }),
-  'v3d-open': () => v3dInput.click(),
+  'v3d-open': () => {
+    if (editing && !fs.ok && window.showDirectoryPicker) { toast('Primeiro conecte a pasta da base, para o 3D ficar guardado. Depois clique de novo em Adicionar 3DXML.', true); connectBase(); return; }
+    v3dInput.click();
+  },
   'v3d-select': d => { const b = $('#v3d'), m = b && models.get(b.dataset.part); if (!m) return; m.sel = m.sel === +d.id ? -1 : +d.id; v3dApplySel(m, false); },
   'v3d-view': d => { if (v3d) v3d.view(d.view); },
   'v3d-edges': () => { if (v3d) v3d.toggleEdges(); },
