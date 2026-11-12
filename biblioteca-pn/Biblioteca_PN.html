@@ -325,8 +325,8 @@ svg.art .as{fill:none;stroke:var(--accent);stroke-width:2.2;stroke-linecap:round
 .v3d-drop{position:absolute;inset:10px;display:grid;place-items:center;text-align:center;color:var(--text-2);cursor:pointer;border:2px dashed var(--border-strong);border-radius:12px;padding:20px}
 .v3d-drop:hover,.v3d.over .v3d-drop,.v3d-drop:focus-visible{border-color:var(--accent);background:var(--accent-soft);outline:none}
 .v3d-drop b{display:block;color:var(--text);font-size:15px;margin-bottom:4px}
-.v3d-info{position:absolute;left:12px;bottom:10px;font-size:12px;color:var(--text-3);pointer-events:none}
-.v3d-help{position:absolute;right:12px;bottom:10px;font-size:12px;color:var(--text-3);pointer-events:none}
+.v3d-info{position:absolute;right:12px;top:14px;font-size:12px;color:var(--text-3);pointer-events:none}
+.v3d-help{position:absolute;left:12px;right:12px;bottom:10px;text-align:right;font-size:12px;color:var(--text-3);pointer-events:none}
 @media (max-width:900px){.v3d{height:360px}.v3d-help{display:none}}
 
 /* MBD captures */
@@ -1135,6 +1135,7 @@ function createViewer(box, model, onPick) {
   const ptr = new Map();
   let pinch = 0;
   canvas.addEventListener('contextmenu', e => e.preventDefault());
+  canvas.addEventListener('mousedown', e => { if (e.button === 1) e.preventDefault(); });   // sem rolagem automática do navegador
   canvas.addEventListener('pointerdown', e => { canvas.setPointerCapture(e.pointerId); ptr.set(e.pointerId, {x: e.clientX, y: e.clientY, x0: e.clientX, y0: e.clientY, pan: e.button !== 0 || e.shiftKey}); pinch = 0; });
   const pick = (cx, cy) => {
     const rc = canvas.getBoundingClientRect(), nx = (cx - rc.left) / rc.width * 2 - 1, ny = 1 - (cy - rc.top) / rc.height * 2;
@@ -1157,7 +1158,7 @@ function createViewer(box, model, onPick) {
   };
   const up = e => {
     const p = ptr.get(e.pointerId);
-    if (p && onPick && e.type === 'pointerup' && e.button === 0 && !p.pan && ptr.size === 1 && Math.hypot(e.clientX - p.x0, e.clientY - p.y0) < 5) onPick(pick(e.clientX, e.clientY));
+    if (p && onPick && e.type === 'pointerup' && e.button === 0 && !p.pan && !p.chorded && ptr.size === 1 && Math.hypot(e.clientX - p.x0, e.clientY - p.y0) < 5) onPick(pick(e.clientX, e.clientY));
     ptr.delete(e.pointerId); pinch = 0;
   };
   canvas.addEventListener('pointerup', up); canvas.addEventListener('pointercancel', up);
@@ -1166,6 +1167,20 @@ function createViewer(box, model, onPick) {
     if (!p) return;
     const dx = e.clientX - p.x, dy = e.clientY - p.y;
     p.x = e.clientX; p.y = e.clientY;
+    // CATIA: meio = mover · meio + esquerdo/direito = girar · meio + clique esquerdo/direito, depois arrastar = zoom
+    if (e.pointerType === 'mouse' && (e.buttons & 4)) {
+      const chord = e.buttons & 3;
+      p.chorded = true;
+      if (chord && !p.chord) p.chordMove = 0;
+      if (!chord && p.chord && p.chordMove < 4) p.zoomMode = true;
+      p.chord = chord;
+      if (chord) { p.chordMove += Math.abs(dx) + Math.abs(dy); st.R = m3(rotX(dy * 0.008), m3(rotY(dx * 0.008), st.R)); }
+      else if (p.zoomMode) st.zoom = Math.min(200, Math.max(0.05, st.zoom * Math.exp(-dy * 0.01)));
+      else { st.pan[0] += 2 * dx / box.clientWidth; st.pan[1] -= 2 * dy / box.clientHeight; }
+      redraw();
+      return;
+    }
+    if (e.pointerType === 'mouse' && p.chorded) { p.zoomMode = false; p.chord = 0; return; }
     if (ptr.size >= 2) {
       const [a, b] = [...ptr.values()], d = Math.hypot(a.x - b.x, a.y - b.y);
       if (pinch) st.zoom = Math.min(200, Math.max(0.05, st.zoom * d / pinch));
@@ -1193,7 +1208,7 @@ function v3dSection(p) {
   return `<div class="section"><div class="section-head">${I.cube}<h2>Modelo 3D</h2><span class="muted">${m ? esc(m.name) : '3DXML tesselado, aberto deste computador'}</span>
     <div class="right">${m ? vb('iso', 'Iso') + vb('frente', 'Frente') + vb('topo', 'Topo') + vb('lado', 'Lado') + `<button class="btn sm ghost" data-act="v3d-edges">Arestas</button>` : ''}<button class="btn sm" data-act="v3d-open">${m ? 'Trocar arquivo' : 'Abrir 3DXML'}</button></div></div>
     <div class="card v3d ${m ? 'has-model' : ''}" id="v3d" data-part="${esc(p.pn)}">${m ? `<div class="v3d-tree" id="v3dTree"><div class="label">Componentes</div>${m.nodes.filter(n => !n.parent && n.all.length).map(n => vtRows(n, 0)).join('')}</div>
-      <div class="v3d-stage" id="v3dStage"><div class="v3d-sel" id="v3dSel"></div><div class="v3d-info">${(m.pos.length / 9).toLocaleString('pt-BR')} triângulos · ${plural(m.parts, 'corpo')}</div><div class="v3d-help">clique: selecionar · arrastar: girar · Shift ou botão direito: mover · rolagem: zoom</div></div>`
+      <div class="v3d-stage" id="v3dStage"><div class="v3d-sel" id="v3dSel"></div><div class="v3d-info">${(m.pos.length / 9).toLocaleString('pt-BR')} triângulos · ${plural(m.parts, 'corpo')}</div><div class="v3d-help">como no CATIA: meio = mover · meio + esquerdo = girar · meio + clique esquerdo e arrastar = zoom · clique = selecionar</div></div>`
       : `<div class="v3d-drop" data-act="v3d-open" role="button" tabindex="0"><div><b>Arraste o .3dxml desta peça aqui</b>ou clique para escolher. O arquivo é lido só neste computador e não fica salvo na biblioteca.</div></div>`}</div></div>`;
 }
 function capSection(p) {
