@@ -1091,7 +1091,7 @@ function createViewer(box, model, onPick) {
   const U = n => gl.getUniformLocation(prog, n);
   const mk = data => { const b = gl.createBuffer(); gl.bindBuffer(gl.ARRAY_BUFFER, b); gl.bufferData(gl.ARRAY_BUFFER, data, gl.STATIC_DRAW); return b; };
   const bP = mk(model.pos), bN = mk(model.nor), bC = mk(model.col), bL = mk(model.lines);
-  const st = {R: VIEWS.iso(), zoom: 1, pan: [0, 0], edges: true, dead: false, sel: []};
+  const st = {R: VIEWS.iso(), zoom: 1, pan: [0, 0], edges: true, dead: false, sel: [], ct: model.center};
   let raf = 0;
   const draw = () => {
     raf = 0;
@@ -1103,7 +1103,7 @@ function createViewer(box, model, onPick) {
     gl.enable(gl.DEPTH_TEST);
     const k = st.zoom * 0.9 / model.radius, asp = w / h;
     gl.uniformMatrix3fv(U('uR'), false, st.R);
-    gl.uniform3fv(U('uCt'), model.center);
+    gl.uniform3fv(U('uCt'), st.ct);
     gl.uniform3f(U('uS'), asp > 1 ? k / asp : k, asp > 1 ? k : k * asp, 0.45 / model.radius);
     gl.uniform2fv(U('uPan'), st.pan);
     if (model.pos.length) {
@@ -1140,7 +1140,7 @@ function createViewer(box, model, onPick) {
   const pick = (cx, cy) => {
     const rc = canvas.getBoundingClientRect(), nx = (cx - rc.left) / rc.width * 2 - 1, ny = 1 - (cy - rc.top) / rc.height * 2;
     const asp = rc.width / rc.height, k = st.zoom * 0.9 / model.radius, sx = asp > 1 ? k / asp : k, sy = asp > 1 ? k : k * asp;
-    const R = st.R, c = model.center, p = model.pos, q = new Float64Array(9);
+    const R = st.R, c = st.ct, p = model.pos, q = new Float64Array(9);
     let best = -Infinity, hit = -1;
     for (let i = 0; i < p.length; i += 9) {
       for (let j = 0; j < 3; j++) {
@@ -1190,11 +1190,21 @@ function createViewer(box, model, onPick) {
     redraw();
   });
   canvas.addEventListener('wheel', e => { e.preventDefault(); st.zoom = Math.min(200, Math.max(0.05, st.zoom * Math.exp(-e.deltaY * 0.0012))); redraw(); }, {passive: false});
-  canvas.addEventListener('dblclick', () => api.view('iso'));
+  canvas.addEventListener('dblclick', e => { if (onPick) onPick(pick(e.clientX, e.clientY), true); });
   const ro = new ResizeObserver(redraw); ro.observe(box);
   const api = {
-    view: name => { st.R = (VIEWS[name] || VIEWS.iso)(); st.zoom = 1; st.pan = [0, 0]; redraw(); },
-    fit: () => { st.zoom = 1; st.pan = [0, 0]; redraw(); },
+    view: name => { st.R = (VIEWS[name] || VIEWS.iso)(); st.zoom = 1; st.pan = [0, 0]; st.ct = model.center; redraw(); },
+    fit: () => { st.zoom = 1; st.pan = [0, 0]; st.ct = model.center; redraw(); },
+    // centraliza e enquadra um conjunto de faixas de triângulos (a rotação passa a ser em torno dele)
+    focus: ranges => {
+      const mn = [Infinity, Infinity, Infinity], mx = [-Infinity, -Infinity, -Infinity], p = model.pos;
+      for (const [a, n] of ranges) for (let i = a * 3; i < (a + n) * 3; i++) { const k = i % 3; if (p[i] < mn[k]) mn[k] = p[i]; if (p[i] > mx[k]) mx[k] = p[i]; }
+      if (mn[0] === Infinity) return;
+      const r = Math.hypot(mx[0] - mn[0], mx[1] - mn[1], mx[2] - mn[2]) / 2 || model.radius;
+      st.ct = [(mn[0] + mx[0]) / 2, (mn[1] + mx[1]) / 2, (mn[2] + mx[2]) / 2];
+      st.zoom = Math.min(200, Math.max(1, 0.8 * model.radius / r)); st.pan = [0, 0];
+      redraw();
+    },
     toggleEdges: () => { st.edges = !st.edges; redraw(); return st.edges; },
     select: ranges => { st.sel = ranges || []; redraw(); },
     destroy: () => { st.dead = true; ro.disconnect(); const x = gl.getExtension('WEBGL_lose_context'); if (x) x.loseContext(); },
@@ -1208,7 +1218,7 @@ function v3dSection(p) {
   return `<div class="section"><div class="section-head">${I.cube}<h2>Modelo 3D</h2><span class="muted">${m ? esc(m.name) : '3DXML tesselado, aberto deste computador'}</span>
     <div class="right">${m ? vb('iso', 'Iso') + vb('frente', 'Frente') + vb('topo', 'Topo') + vb('lado', 'Lado') + `<button class="btn sm ghost" data-act="v3d-edges">Arestas</button>` : ''}<button class="btn sm" data-act="v3d-open">${m ? 'Trocar arquivo' : 'Abrir 3DXML'}</button></div></div>
     <div class="card v3d ${m ? 'has-model' : ''}" id="v3d" data-part="${esc(p.pn)}">${m ? `<div class="v3d-tree" id="v3dTree"><div class="label">Componentes</div>${m.nodes.filter(n => !n.parent && n.all.length).map(n => vtRows(n, 0)).join('')}</div>
-      <div class="v3d-stage" id="v3dStage"><div class="v3d-sel" id="v3dSel"></div><div class="v3d-info">${(m.pos.length / 9).toLocaleString('pt-BR')} triângulos · ${plural(m.parts, 'corpo')}</div><div class="v3d-help">como no CATIA: meio = mover · meio + esquerdo = girar · meio + clique esquerdo e arrastar = zoom · clique = selecionar</div></div>`
+      <div class="v3d-stage" id="v3dStage"><div class="v3d-sel" id="v3dSel"></div><div class="v3d-info">${(m.pos.length / 9).toLocaleString('pt-BR')} triângulos · ${plural(m.parts, 'corpo')}</div><div class="v3d-help">como no CATIA: meio = mover · meio + esquerdo = girar · meio + clique esquerdo e arrastar = zoom · clique = selecionar · duplo clique = centralizar</div></div>`
       : `<div class="v3d-drop" data-act="v3d-open" role="button" tabindex="0"><div><b>Arraste o .3dxml desta peça aqui</b>ou clique para escolher. O arquivo é lido só neste computador e não fica salvo na biblioteca.</div></div>`}</div></div>`;
 }
 function capSection(p) {
@@ -1284,10 +1294,11 @@ function mountV3d() {
   const box = $('#v3d');
   const m = box && models.get(box.dataset.part);
   if (!m) return;
-  const onPick = vi => {
+  const onPick = (vi, focus) => {
     const hit = vi < 0 ? null : m.nodes.find(n => n.ranges.some(([a, c]) => vi >= a && vi < a + c));
     m.sel = hit ? hit.id : -1;
     v3dApplySel(m, true);
+    if (focus && v3d) hit ? v3d.focus(hit.all) : v3d.fit();
   };
   try { v3d = createViewer($('#v3dStage'), m, onPick); v3dApplySel(m, false); } catch (x) { box.innerHTML = `<div class="v3d-drop"><div><b>Não consegui abrir o 3D</b>${esc(x.message)}</div></div>`; }
 }
@@ -1299,6 +1310,14 @@ async function v3dLoad(file) {
   try { models.set(pn, await load3dxml(file)); renderMain(true); }
   catch (x) { box.innerHTML = `<div class="v3d-drop" data-act="v3d-open" role="button" tabindex="0"><div><b>Não consegui abrir este arquivo</b>${esc(x && x.message || x)}<br>Clique para tentar outro.</div></div>`; }
 }
+document.addEventListener('dblclick', e => {
+  const row = e.target.closest && e.target.closest('.vt-row');
+  const b = $('#v3d'), m = row && b && models.get(b.dataset.part);
+  if (!m || !v3d) return;
+  m.sel = +row.dataset.id;
+  v3dApplySel(m, false);
+  v3d.focus(m.nodes[m.sel].all);
+});
 const v3dInput = document.createElement('input');
 v3dInput.type = 'file'; v3dInput.accept = '.3dxml,.3DXML,.3drep'; v3dInput.hidden = true;
 document.body.appendChild(v3dInput);
