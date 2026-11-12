@@ -869,6 +869,7 @@ function viewInsert(pn) {
       return `<li>${ico('parafuso', 'sm')}${pnLink('parafuso', s)}${copyBtn(s)}${headChip(sc.head)}<span class="sub">${esc(sc.description || '')}</span>
         <span class="end"><span class="chip" title="${esc(ps.map(p => p.pn).join(', '))}">em ${plural(ps.length, 'peça')}</span></span></li>`;
     }).join('')}</ul></div>` : emptyBox('parafuso', 'Nenhum parafuso indicado', 'Indique parafusos a partir da página de uma peça que usa este inserto.')) + '</div>';
+  html += v3dSection(i);
   html += usedIn(uses, u => `${u.entry.preferred ? prefBadge() : ''}<span class="chip">${plural(u.entry.screws.length, 'parafuso')}</span>`);
   if (i.notes) html += `<div class="section"><div class="section-head"><h2>Observações</h2></div><div class="card" style="padding:14px 16px;white-space:pre-wrap">${esc(i.notes)}</div></div>`;
   return html;
@@ -892,6 +893,7 @@ function viewScrew(pn) {
       return `<li>${ico('inserto', 'sm')}${pnLink('inserto', i)}${copyBtn(i)}${threadChip(it.thread)}<span class="sub">${esc(it.description || '')}</span>
         <span class="end"><span class="chip" title="${esc(ps.map(p => p.pn).join(', '))}">em ${plural(ps.length, 'peça')}</span></span></li>`;
     }).join('')}</ul></div>` : emptyBox('inserto', 'Ainda não indicado', 'Este parafuso está no catálogo mas não foi indicado em nenhuma peça.')) + '</div>';
+  html += v3dSection(s);
   html += usedIn(uses, u => `<span class="faint">via</span>${pnLink('inserto', u.entry.insert)}`);
   if (s.notes) html += `<div class="section"><div class="section-head"><h2>Observações</h2></div><div class="card" style="padding:14px 16px;white-space:pre-wrap">${esc(s.notes)}</div></div>`;
   return html;
@@ -1035,6 +1037,7 @@ function loadStoredModel(p, box) {
 }
 
 /* ---------------- 3D viewer (3DXML tesselado) ---------------- */
+const anyItem = pn => idx.part.get(pn) || idx.ins.get(pn) || idx.scr.get(pn);
 const models = new Map();          // PN -> modelo em memória (vem de base/modelos ou de um arquivo aberto na hora)
 let v3dNoTree = false;
 let v3d = null;                    // viewer montado na página atual
@@ -1438,7 +1441,7 @@ function mountV3d() {
   const box = $('#v3d');
   const m = box && models.get(box.dataset.part);
   if (!m) {
-    const p = box && idx.part.get(box.dataset.part);
+    const p = box && anyItem(box.dataset.part);
     if (p && p.model) loadStoredModel(p, box);
     return;
   }
@@ -1458,7 +1461,7 @@ async function v3dLoad(file) {
   try {
     const m = await load3dxml(file);
     models.set(pn, m); modelFail.delete(pn);
-    const p = idx.part.get(pn);
+    const p = anyItem(pn);
     if (editing && p) {
       if (fs.ok) {
         try { p.model = {file: await saveModelFile(pn, m), name: m.name, at: new Date().toISOString()}; commit('Modelo 3D guardado na pasta da base'); return; }
@@ -1613,6 +1616,21 @@ function openForm(o) {
   const form = $('form', dlg), err = $('.form-error', form);
   $('[data-close]', form).onclick = () => dlg.close();
   if (o.onInput) { form.addEventListener('input', () => o.onInput(form)); o.onInput(form); }
+  const m3 = $('[data-m3d]', form);
+  if (m3) {
+    const file = $('[data-m3d-file]', form), lab = $('[data-m3d-label]', form);
+    m3.onclick = () => {
+      if (!fs.ok && window.showDirectoryPicker) { lab.textContent = 'Primeiro conecte a pasta da base (Dados › Conectar pasta da base), depois escolha o 3DXML.'; connectBase(); return; }
+      file.click();
+    };
+    file.onchange = async () => {
+      const f = file.files[0]; file.value = '';
+      if (!f) return;
+      lab.textContent = 'Lendo ' + f.name + '…';
+      try { form._model = await load3dxml(f); lab.textContent = `${f.name} · ${(form._model.pos.length / 9).toLocaleString('pt-BR')} triângulos. Será guardado ao salvar.`; }
+      catch (x) { form._model = null; lab.textContent = 'Não consegui ler: ' + (x && x.message || x); }
+    };
+  }
   $$('.imgpick', form).forEach(box => {
     const field = box.parentNode, hidden = form.elements[box.dataset.img], file = $('input[type=file]', field), clr = $('[data-img-clear]', field);
     const show = () => {
@@ -1660,6 +1678,9 @@ function fieldHtml(f, vals) {
   const v = vals[f.name] ?? '';
   const id = 'f_' + f.name;
   if (f.type === 'info') return `<div class="form-info">${f.html}</div>`;
+  if (f.type === 'model3d') return `<div class="field"><span class="field-label">Modelo 3D deste PN (3DXML tesselado)</span>
+    <div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap"><button type="button" class="btn sm" data-m3d>${I.cube}Escolher 3DXML…</button><span class="small muted" data-m3d-label>${f.current ? 'Atual: ' + esc(f.current.name || f.current.file) : 'Nenhum modelo guardado'}</span></div>
+    <input type="file" accept=".3dxml,.3DXML" hidden data-m3d-file><span class="field-hint" style="display:block">O modelo é guardado em base/modelos com o nome do PN e abre sozinho na página dele.</span></div>`;
   if (f.type === 'image') return `<div class="field"><span class="field-label">${esc(f.label)}</span><div class="imgpick" data-img="${f.name}" data-max="${f.max || 720}" tabindex="0" role="button"></div><input type="hidden" name="${f.name}" value="${esc(v)}"><input type="file" accept="image/*" hidden><span class="field-hint" style="display:block">${esc(f.hint || '')} <button type="button" class="linkbtn" data-img-clear>Remover imagem</button></span></div>`;
   if (f.type === 'checkbox') return `<label class="check"><input type="checkbox" name="${f.name}" ${v ? 'checked' : ''}><span>${esc(f.label)}</span></label>`;
   let ctl;
@@ -1751,6 +1772,17 @@ function passwordForm() {
   });
 }
 
+// grava o 3DXML escolhido no formulário como modelo do PN (peça, inserto ou parafuso)
+async function attachModel(item, form) {
+  const m = form && form._model;
+  if (!m || !item) return '';
+  if (!fs.ok) return 'Para guardar o 3D, conecte antes a pasta da base (Dados › Conectar pasta da base).';
+  try { item.model = {file: await saveModelFile(item.pn, m), name: m.name, at: new Date().toISOString()}; }
+  catch (x) { return 'Não consegui gravar o modelo na pasta: ' + (x && x.message || x); }
+  models.set(item.pn, m); modelFail.delete(item.pn);
+  return '';
+}
+
 /* --- part --- */
 function partForm(p, asmName) {
   const isNew = !p, r = route();
@@ -1764,13 +1796,16 @@ function partForm(p, asmName) {
       {name: 'description', label: 'Descrição', placeholder: 'Ex.: Painel lateral do bin'},
       {name: 'assembly', label: 'Commodity', list: db.assemblies.map(a => a.name), placeholder: 'Ex.: Overhead Bin', hint: 'Digite um nome novo para criar uma commodity.'},
       {name: 'notes', label: 'Observações', type: 'textarea'},
+      {type: 'model3d', current: p && p.model},
     ],
     values: isNew ? {assembly: defAsm} : {pn: p.pn, description: p.description, assembly: idx.asm.get(p.assembly)?.name || '', notes: p.notes},
-    onSubmit: v => {
+    onSubmit: async (v, form) => {
       const pn = normPn(v.pn);
       if (idx.part.has(pn) && (isNew || pn !== p.pn)) return `Já existe uma peça com o PN ${pn}.`;
       const t = p || {pn, inserts: []};
       t.pn = pn; t.description = v.description; t.assembly = asmIdByName(v.assembly); t.notes = v.notes;
+      const merr = await attachModel(t, form);
+      if (merr) return merr;
       if (isNew) db.parts.push(t);
       commit(isNew ? `Peça ${pn} criada` : 'Peça atualizada');
       go('peca', pn);
@@ -1790,6 +1825,7 @@ function entryForm(p, e) {
       {name: 'insDesc', label: 'Descrição do inserto', half: true},
       {name: 'preferred', label: 'Preferencial — primeira escolha por boa prática', type: 'checkbox'},
       {name: 'note', label: 'Observação desta indicação', type: 'textarea', placeholder: 'Ex.: usar em região de borda; requer adesivo…'},
+      {type: 'model3d', current: cur && cur.model},
     ],
     values: e ? {insert: e.insert, thread: cur?.thread, insDesc: cur?.description, preferred: e.preferred, note: e.note} : {},
     onInput: form => {
@@ -1798,13 +1834,15 @@ function entryForm(p, e) {
       if (ex) { form.elements.thread.value = ex.thread || ''; form.elements.insDesc.value = ex.description || ''; }
       setHint(form, 'insert', !pn ? 'Escolha um inserto do catálogo ou digite um PN novo.' : ex ? (isNew ? 'Inserto do catálogo.' : 'Para alterar rosca/descrição, edite o inserto na página dele.') : 'Novo inserto — será adicionado ao catálogo.');
     },
-    onSubmit: v => {
+    onSubmit: async (v, form) => {
       const pn = normPn(v.insert);
       if (isNew && p.inserts.some(x => x.insert === pn)) return `${pn} já está indicado para esta peça.`;
       if (!idx.ins.has(pn)) {
         if (!v.thread) return 'Informe a rosca do novo inserto.';
         db.inserts.push({pn, thread: v.thread, description: v.insDesc, notes: ''});
       }
+      const merr = await attachModel(db.inserts.find(x => x.pn === pn), form);
+      if (merr) return merr;
       const t = e || {insert: pn, screws: []};
       t.preferred = !!v.preferred; t.note = v.note;
       if (isNew) p.inserts.push(t);
@@ -1856,17 +1894,20 @@ function catalogForm(kind, item) {
     {name: 'thread', label: 'Rosca', list: THREADS, half: !isIns, required: isIns, placeholder: 'Ex.: 8-32'},
     {name: 'description', label: 'Descrição'},
     {name: 'notes', label: 'Observações', type: 'textarea'},
+    {type: 'model3d', current: item && item.model},
   ];
   openForm({
     title: (isNew ? 'Novo ' : 'Editar ') + (isIns ? 'inserto' : 'parafuso'),
     fields, values: item || {},
-    onSubmit: v => {
+    onSubmit: async (v, form) => {
       const pn = normPn(v.pn);
       if (map.has(pn) && (isNew || pn !== item.pn)) return `Já existe ${isIns ? 'um inserto' : 'um parafuso'} com o PN ${pn}.`;
       const t = item || {pn};
       const old = t.pn;
       Object.assign(t, {pn, thread: v.thread, description: v.description, notes: v.notes});
       if (!isIns) t.head = v.head;
+      const merr = await attachModel(t, form);
+      if (merr) return merr;
       if (isNew) list.push(t);
       else if (old !== pn) db.parts.forEach(p => p.inserts.forEach(e => {
         if (isIns) { if (e.insert === old) e.insert = pn; } else e.screws = e.screws.map(s => s === old ? pn : s);
@@ -1933,8 +1974,8 @@ const ACT = {
   'connect-base': () => requireUnlock(connectBase),
   'save-base': () => requireUnlock(saveBase),
   'v3d-tree': () => { v3dNoTree = !v3dNoTree; const b = $('#v3d'); if (b) b.classList.toggle('no-tree', v3dNoTree); },
-  'v3d-remove': d => confirmBox('Remover o modelo 3D desta peça?', 'A peça deixa de abrir o 3D sozinha. O arquivo do modelo continua na pasta base/modelos.', 'Remover', () => {
-    const p = idx.part.get(d.part); delete p.model; models.delete(p.pn); commit('Modelo 3D removido da peça');
+  'v3d-remove': d => confirmBox('Remover o modelo 3D deste PN?', 'Ele deixa de abrir o 3D sozinho. O arquivo do modelo continua na pasta base/modelos.', 'Remover', () => {
+    const p = anyItem(d.part); delete p.model; models.delete(p.pn); commit('Modelo 3D removido');
   }),
   'v3d-open': () => {
     if (editing && !fs.ok && window.showDirectoryPicker) { toast('Primeiro conecte a pasta da base, para o 3D ficar guardado. Depois clique de novo em Adicionar 3DXML.', true); connectBase(); return; }
