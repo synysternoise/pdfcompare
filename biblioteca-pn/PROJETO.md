@@ -41,6 +41,9 @@ Tudo num IIFE, JavaScript puro, sem framework. Renderização por *template stri
 - **Dados** (`db`): `assemblies` (commodities: `id, name, short, art, image, description`), `parts`
   (`pn, description, assembly, notes, inserts:[{insert, preferred, note, screws:[pn]}], captures:[{name,img}]`),
   `inserts` (`pn, thread, description`), `screws` (`pn, head, thread, description`), `editLock`, `updatedAt`.
+- **Peça:** também tem `kind` (`extrudado|fabricado|hardware`), `effectivity`, `model` e `variants` — os PNs que
+  usam a peça-base: `[{pn, kind, description, commodities:[ids], effectivity, notes, model}]`. Modelos 3D são
+  guardados por PN (peça, variante, inserto ou parafuso); `anyItem(pn)` acha qualquer um deles.
 - **Persistência:** edições vão para `localStorage` como `{base, data}`; `base` é o `updatedAt` do arquivo em que
   foram feitas. Arquivo mais novo que as edições → as edições viram *backup* recuperável (não se perdem).
   "Salvar como HTML" regrava o `seed-data` num novo arquivo.
@@ -65,6 +68,8 @@ Tudo num IIFE, JavaScript puro, sem framework. Renderização por *template stri
   `commit()` (com checagem de conflito pelo `updatedAt`), `saveModelFile()` grava o modelo compactado
   (`encodeModel`: posições em uint16 relativas à caixa, normais int8, base64). O handle da pasta fica no IndexedDB.
 - Teste: sirva o HTML por `python3 -m http.server` e troque `showDirectoryPicker` por `navigator.storage.getDirectory()`.
+  No Chromium headless, reler esse handle do IndexedDB derruba o navegador: no teste, anule `window.indexedDB`.
+  O caminho real (handle lembrado entre sessões) só pode ser conferido no PC do usuário.
 
 ## Design (manter exatamente este padrão)
 

@@ -109,3 +109,11 @@ Biblioteca_PN\
   convertido e guardado em `base/modelos`; daí em diante abre sozinho para todos.
 - **Duas pessoas editando:** se alguém gravou depois que você abriu a página, a biblioteca avisa antes de substituir.
 - Quem só consulta não precisa conectar nada nem saber a senha.
+
+### Tipo, PNs que usam a peça e ficha técnica
+
+- Cada peça tem um **Tipo** (Extrudado, Fabricado, Hardware) e uma **Efetividade**, editáveis pelo lápis da peça.
+- Uma peça-base (por exemplo um perfil extrudado `CDPA...`) pode ter vários **PNs que usam** ela. No Modo edição:
+  **Adicionar PN que usa …** e preencha PN, tipo, descrição, commodities (uma ou mais), efetividade e o 3DXML.
+- Quem consulta abre a peça, **escolhe o PN** na lista e vê o 3D com a **ficha técnica** no canto inferior esquerdo.
+- A busca do topo também encontra esses PNs.

@@ -335,6 +335,32 @@ svg.art .as{fill:none;stroke:var(--accent);stroke-width:2.2;stroke-linecap:round
 .v3d-help{position:absolute;left:12px;right:12px;bottom:10px;text-align:right;font-size:12px;color:var(--text-3);pointer-events:none}
 @media (max-width:900px){.v3d{height:360px}.v3d-help{display:none}}
 
+/* PN selector + ficha técnica */
+.pnsel{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:12px}
+.pnopt{display:flex;flex-direction:column;align-items:flex-start;gap:3px;padding:9px 14px;border:1.5px solid var(--border-strong);border-radius:10px;background:var(--surface);cursor:pointer;font:inherit;color:inherit;text-align:left;min-width:160px;box-shadow:var(--shadow);transition:border-color .12s,box-shadow .12s}
+.pnopt:hover{border-color:var(--accent)}
+.pnopt.active{border-color:var(--accent);box-shadow:0 0 0 3px var(--accent-soft)}
+.pnopt .pn{font-weight:700;font-size:13.5px}
+.pnopt small{font:600 10px/1.3 var(--mono);color:var(--text-3);text-transform:uppercase;letter-spacing:.08em}
+.pnsel.big .pnopt{min-width:220px;padding:14px 16px}
+.pnsel.big .pnopt .pn{font-size:16px}
+.pick-hint{display:flex;align-items:center;gap:8px;margin-bottom:10px;font-size:13px;color:var(--text-2)}
+.ficha{position:absolute;left:12px;bottom:12px;width:min(310px,calc(100% - 24px));background:color-mix(in srgb,var(--surface) 90%,transparent);backdrop-filter:blur(8px);border:1px solid var(--border);border-top:3px solid var(--accent);border-radius:4px 4px 10px 10px;padding:10px 12px 12px;font-size:12.5px;box-shadow:var(--shadow-lg)}
+.ficha-card{padding:0;overflow:hidden}
+.ficha-card .ficha{position:static;width:auto;box-shadow:none;border:0;border-top:3px solid var(--accent);border-radius:0;background:var(--surface);padding:14px 16px}
+.ficha-h{display:flex;align-items:center;gap:4px;font:700 10px/1 var(--mono);letter-spacing:.16em;text-transform:uppercase;color:var(--text-3);margin-bottom:9px;min-height:22px}
+.ficha-h span{flex:1}
+.ficha dl{display:grid;grid-template-columns:auto minmax(0,1fr);gap:5px 12px;margin:0;align-items:baseline}
+.ficha dt{font:600 9.5px/1.7 var(--mono);letter-spacing:.12em;text-transform:uppercase;color:var(--text-3)}
+.ficha dd{margin:0;min-width:0;overflow-wrap:anywhere;display:flex;gap:4px;flex-wrap:wrap;align-items:center}
+.ficha dd.big{font-family:var(--mono);font-weight:700;font-size:15px;letter-spacing:.01em}
+.chip.kind{font-family:var(--mono);font-size:10.5px;font-weight:700;letter-spacing:.09em;text-transform:uppercase;border-color:color-mix(in srgb,var(--accent) 35%,var(--border));background:var(--accent-soft);color:var(--accent-text)}
+.v3d-stage:has(.ficha) .v3d-help{left:334px}
+.checks{display:flex;gap:6px 14px;flex-wrap:wrap}
+.checks label{display:flex;align-items:center;gap:6px;font-size:13px;cursor:pointer}
+.checks input{width:15px;height:15px;accent-color:var(--accent)}
+@media (max-width:900px){.ficha{left:8px;bottom:8px;width:min(250px,calc(100% - 16px));font-size:11.5px;padding:8px 10px}}
+
 /* MBD captures */
 .caps{display:grid;grid-template-columns:repeat(auto-fill,minmax(min(100%,220px),1fr));gap:14px}
 .cap{position:relative;background:var(--surface);border:1px solid var(--border);border-radius:12px;overflow:hidden;box-shadow:var(--shadow);min-width:0}
@@ -494,7 +520,7 @@ dialog::backdrop{background:rgba(15,20,30,.45);backdrop-filter:blur(2px)}
   {"id": "wardrobe", "name": "Wardrobe", "art": "wardrobe", "description": ""}
  ],
  "parts": [
-  {"pn": "CDPA689", "description": "", "assembly": "overhead-bin", "notes": "",
+  {"pn": "CDPA689", "kind": "extrudado", "description": "", "assembly": "overhead-bin", "notes": "",
    "inserts": [
     {"insert": "CDIN07-08-06", "preferred": false, "note": "", "screws": ["NAS514P832-3P", "NAS8302-3"]},
     {"insert": "CDIN23-08S", "preferred": false, "note": "", "screws": []}
@@ -720,7 +746,7 @@ function partLi(p, force) {
   const n = p.inserts.length;
   const P = dattr({part: p.pn});
   const node = `<div class="node part ${open ? 'open' : ''}" ${force ? '' : `data-act="tree-part" ${P} role="button" tabindex="0" aria-expanded="${open}"`}>
-    <span class="nk">Peça</span>${force ? pnLink('peca', p.pn) : `<span class="pn-link peca">${esc(p.pn)}</span>${goLink('peca', p.pn)}`}
+    <span class="nk">Peça${KINDS[p.kind] ? ' · ' + KINDS[p.kind] : ''}</span>${force ? pnLink('peca', p.pn) : `<span class="pn-link peca">${esc(p.pn)}</span>${goLink('peca', p.pn)}`}
     ${p.description ? `<span class="ns">${esc(p.description)}</span>` : ''}
     <span class="ns ${n ? '' : 'warn'}">${n ? plural(n, 'inserto') : 'Sem inserto'}</span>
     ${editing ? `<span class="nacts">${editBtn('edit-part', P, 'Editar peça')}${delBtn('delete-part', P, 'Excluir peça')}</span>` : ''}
@@ -819,14 +845,14 @@ function viewPart(pn) {
   const threads = new Set(p.inserts.map(e => idx.ins.get(e.insert)?.thread).filter(Boolean));
   const screwSet = new Set(p.inserts.flatMap(e => e.screws));
   let html = crumbs([a ? {label: a.name, href: href('conjunto', a.id)} : {label: 'Sem commodity'}, {label: p.pn}]) +
-    hero('peca', p.pn, {desc: p.description, chips: a ? `<span class="chip">${esc(a.name)}</span>` : '',
+    hero('peca', p.pn, {desc: p.description, chips: (a ? `<span class="chip">${esc(a.name)}</span>` : '') + kindChip(p.kind),
       actions: `${editBtn('edit-part', P, 'Editar peça')}${delBtn('delete-part', P, 'Excluir peça')}`}) +
     `<div class="stats">${stat('inserto', p.inserts.length, p.inserts.length === 1 ? 'inserto indicado' : 'insertos indicados')}${stat('conjunto', threads.size, 'rosca(s)')}${stat('parafuso', screwSet.size, screwSet.size === 1 ? 'parafuso indicado' : 'parafusos indicados')}</div>`;
   html += `<div class="tree-card"><div class="tree-bar">${I.conjunto}<b>Montagem recomendada</b><span class="faint small">peça → inserto (rosca) → inserto → parafusos</span>
     <div class="right"><button class="btn primary sm edit-only" data-act="add-entry" ${P}>${I.plus}Indicar inserto</button></div></div>
     ${p.inserts.length ? '' : `<div class="tree-hint view-only">${I.info}<span>Nenhum inserto indicado ainda. Ative o <b>Modo edição</b> (canto superior direito) para indicar.</span></div>`}
     ${treeWrap(partLi(p, true))}</div>`;
-  html += v3dSection(p) + capSection(p);
+  html += partModelsSection(p) + capSection(p);
   if (p.inserts.length) {
     html += `<div class="section"><div class="section-head">${I.table}<h2>Combinações</h2><span class="muted">tabela para copiar e colar no Excel</span>
       <div class="right"><button class="btn sm" data-act="copy-table" ${P}>${I.copy}Copiar tabela</button></div></div>
@@ -1037,7 +1063,12 @@ function loadStoredModel(p, box) {
 }
 
 /* ---------------- 3D viewer (3DXML tesselado) ---------------- */
-const anyItem = pn => idx.part.get(pn) || idx.ins.get(pn) || idx.scr.get(pn);
+const KINDS = {extrudado: 'Extrudado', fabricado: 'Fabricado', hardware: 'Hardware'};
+const KIND_OPTS = [{value: '', label: '—'}, ...Object.entries(KINDS).map(([value, label]) => ({value, label}))];
+const kindChip = k => KINDS[k] ? `<span class="chip kind">${KINDS[k]}</span>` : '';
+const findVariant = pn => { for (const p of db.parts) for (const v of p.variants || []) if (v.pn === pn) return v; return null; };
+const anyItem = pn => idx.part.get(pn) || idx.ins.get(pn) || idx.scr.get(pn) || findVariant(pn);
+const v3dPick = new Map();       // PN da peça -> PN escolhido para ver no 3D
 const models = new Map();          // PN -> modelo em memória (vem de base/modelos ou de um arquivo aberto na hora)
 let v3dNoTree = false;
 let v3d = null;                    // viewer montado na página atual
@@ -1356,7 +1387,7 @@ function createViewer(box, model, onPick) {
   redraw();
   return api;
 }
-function v3dSection(p) {
+function v3dSection(p, ficha = '') {
   const m = models.get(p.pn);
   // Sem modelo: quem consulta não vê nada; quem edita vê só o botão para ligar um 3DXML a este PN.
   if (!m && !p.model) return editing ? `<div class="section"><div class="section-head">${I.cube}<h2>Modelo 3D</h2><span class="muted">${esc(p.pn)} ainda não tem modelo</span>
@@ -1365,8 +1396,72 @@ function v3dSection(p) {
   return `<div class="section"><div class="section-head">${I.cube}<h2>Modelo 3D</h2><span class="muted">${m ? esc(m.name) : '3DXML tesselado, aberto deste computador'}</span>
     <div class="right">${m ? vb('iso', 'Iso') + vb('frente', 'Frente') + vb('topo', 'Topo') + vb('lado', 'Lado') + `<button class="btn sm ghost" data-act="v3d-edges">Arestas</button><button class="btn sm ghost" data-act="v3d-tree">Componentes</button>` : ''}${p.model ? `<button class="btn sm ghost edit-only" data-act="v3d-remove" data-part="${esc(p.pn)}">Remover 3D</button>` : ''}<button class="btn sm ${p.model ? 'edit-only' : ''}" data-act="v3d-open">${m || p.model ? 'Trocar arquivo' : 'Abrir 3DXML'}</button></div></div>
     <div class="card v3d ${m ? 'has-model' : ''} ${v3dNoTree ? 'no-tree' : ''}" id="v3d" data-part="${esc(p.pn)}">${m ? `<div class="v3d-tree" id="v3dTree"><div class="label">Componentes</div>${m.nodes.filter(n => !n.parent && n.all.length).map(n => vtRows(n, 0)).join('')}</div>
-      <div class="v3d-stage" id="v3dStage"><div class="v3d-sel" id="v3dSel"></div><div class="v3d-info">${(m.pos.length / 9).toLocaleString('pt-BR')} triângulos · ${plural(m.parts, 'corpo')}</div><div class="v3d-help">como no CATIA: meio = mover · meio + esquerdo = girar · meio + clique esquerdo e arrastar = zoom · clique = selecionar · duplo clique = centralizar</div></div>`
+      <div class="v3d-stage" id="v3dStage">${ficha}<div class="v3d-sel" id="v3dSel"></div><div class="v3d-info">${(m.pos.length / 9).toLocaleString('pt-BR')} triângulos · ${plural(m.parts, 'corpo')}</div><div class="v3d-help">como no CATIA: meio = mover · meio + esquerdo = girar · meio + clique esquerdo e arrastar = zoom · clique = selecionar · duplo clique = centralizar</div></div>`
       : `<div class="v3d-drop" style="cursor:default"><div></div></div>`}</div></div>`;
+}
+function fichaHtml(base, it) {
+  const self = it === base;
+  const coms = self ? [base.assembly] : (it.commodities && it.commodities.length ? it.commodities : [base.assembly]);
+  const comChips = coms.filter(id => idx.asm.has(id)).map(id => { const a = idx.asm.get(id); return `<a class="chip" href="${href('conjunto', id)}">${esc(a.short || a.name)}</a>`; }).join('') || '<span class="faint">—</span>';
+  const D = dattr({part: base.pn, pn: it.pn});
+  const row = (k, v, cls = '') => `<dt>${k}</dt><dd class="${cls}">${v}</dd>`;
+  return `<div class="ficha"><div class="ficha-h"><span>Ficha técnica</span>${editing ? (self ? editBtn('edit-part', dattr({part: base.pn}), 'Editar ficha') : editBtn('edit-variant', D, 'Editar ficha') + delBtn('delete-variant', D, 'Excluir este PN')) : ''}</div><dl>
+    ${row('PN', esc(it.pn), 'big')}
+    ${it.description ? row('Descrição', esc(it.description)) : ''}
+    ${row('Tipo', kindChip(it.kind) || '<span class="faint">—</span>')}
+    ${self ? '' : row('Base', `<span class="mono">${esc(base.pn)}</span>${kindChip(base.kind)}`)}
+    ${row('Commodity', comChips)}
+    ${row('Efetividade', it.effectivity ? esc(it.effectivity) : '<span class="faint">—</span>')}
+    ${it.notes && !self ? row('Obs.', esc(it.notes)) : ''}
+  </dl></div>`;
+}
+// Página da peça: escolha do PN (o próprio perfil ou um PN que usa ele) + viewer com a ficha técnica
+function partModelsSection(p) {
+  const vars = p.variants || [];
+  const opts = [...(p.model || models.has(p.pn) ? [p] : []), ...vars];
+  const P = dattr({part: p.pn});
+  const addBtns = `<button class="btn primary sm edit-only" data-act="add-variant" ${P}>${I.plus}Adicionar PN que usa ${esc(p.pn)}</button>`;
+  if (!opts.length) return editing ? `<div class="section"><div class="section-head">${I.cube}<h2>Modelos 3D</h2><span class="muted">nenhum PN cadastrado para ${esc(p.pn)}</span><div class="right">${addBtns}</div></div></div>` + v3dSection(p) : '';
+  let sel = v3dPick.get(p.pn);
+  if (!opts.some(o => o.pn === sel)) sel = opts.length === 1 ? opts[0].pn : null;
+  const it = opts.find(o => o.pn === sel);
+  const opt = o => `<button class="pnopt ${o.pn === sel ? 'active' : ''}" data-act="v3d-choose" ${P} data-pn="${esc(o.pn)}"><small>${o === p ? 'Perfil / peça base' : esc(KINDS[o.kind] || 'PN')}${o.model || models.has(o.pn) ? '' : ' · sem 3D'}</small><span class="pn">${esc(o.pn)}</span>${o.description ? `<span class="small muted">${esc(o.description)}</span>` : ''}</button>`;
+  let html = `<div class="section"><div class="section-head">${I.cube}<h2>Modelos 3D</h2><span class="muted">${vars.length ? plural(vars.length, 'PN usa', 'PNs usam') + ' ' + esc(p.pn) : esc(p.pn)}</span><div class="right">${addBtns}</div></div>
+    ${it ? '' : `<div class="pick-hint">${I.info}Escolha o PN que você quer ver.</div>`}
+    <div class="pnsel ${it ? '' : 'big'}">${opts.map(opt).join('')}</div></div>`;
+  if (!it) return html;
+  const ficha = fichaHtml(p, it);
+  if (it.model || models.has(it.pn)) return html + v3dSection(it, ficha);
+  return html + `<div class="card ficha-card">${ficha}</div>` + v3dSection(it);
+}
+function variantForm(p, v) {
+  const isNew = !v;
+  openForm({
+    title: isNew ? `Novo PN que usa ${p.pn}` : 'Editar ficha técnica',
+    subtitle: isNew ? '' : `${v.pn} · base ${p.pn}`,
+    fields: [
+      {name: 'pn', label: 'PN', required: true, mono: true, half: true, placeholder: 'Ex.: H311542-527'},
+      {name: 'kind', label: 'Tipo', type: 'select', options: KIND_OPTS, half: true},
+      {name: 'description', label: 'Descrição'},
+      {name: 'commodities', label: 'Commodity (uma ou mais)', type: 'checks', options: db.assemblies.map(a => ({value: a.id, label: a.short || a.name}))},
+      {name: 'effectivity', label: 'Efetividade', placeholder: 'Aeronaves / números de série em que se aplica'},
+      {name: 'notes', label: 'Observações', type: 'textarea'},
+      {type: 'model3d', current: v && v.model},
+    ],
+    values: v || {kind: 'fabricado', commodities: idx.asm.has(p.assembly) ? [p.assembly] : []},
+    onSubmit: async (val, form) => {
+      const pn = normPn(val.pn);
+      const other = anyItem(pn);
+      if (other && other !== v) return `O PN ${pn} já existe na biblioteca.`;
+      const t = v || {};
+      Object.assign(t, {pn, kind: val.kind, description: val.description, commodities: val.commodities, effectivity: val.effectivity, notes: val.notes});
+      const merr = await attachModel(t, form);
+      if (merr) return merr;
+      if (isNew) { if (!p.variants) p.variants = []; p.variants.push(t); }
+      v3dPick.set(p.pn, pn);
+      commit(isNew ? `${pn} adicionado a ${p.pn}` : 'Ficha técnica atualizada');
+    },
+  });
 }
 function capSection(p) {
   const caps = p.captures || [];
@@ -1572,6 +1667,7 @@ function searchAll(q) {
     if (rest.some(v => fold(v).includes(f))) return 2;
     return -1;
   };
+  db.parts.forEach(p => (p.variants || []).forEach(v => { const s = score(v.pn, v.description, v.effectivity); if (s >= 0) out.push({kind: 'peca', pn: v.pn, id: p.pn, sub: ['usa ' + p.pn, KINDS[v.kind], v.description].filter(Boolean).join(' · '), s}); }));
   db.parts.forEach(p => { const s = score(p.pn, p.description, asmName(p.assembly)); if (s >= 0) out.push({kind: 'peca', pn: p.pn, sub: [asmName(p.assembly), p.description].filter(Boolean).join(' · '), s}); });
   db.inserts.forEach(i => { const s = score(i.pn, i.description, i.thread); if (s >= 0) out.push({kind: 'inserto', pn: i.pn, sub: [i.thread && 'Rosca ' + i.thread, i.description].filter(Boolean).join(' · '), s}); });
   db.screws.forEach(x => { const s = score(x.pn, x.description, x.head, HEADS[x.head], x.thread); if (s >= 0) out.push({kind: 'parafuso', pn: x.pn, sub: [x.head && `${x.head} · ${HEADS[x.head] || ''}`, x.thread && 'Rosca ' + x.thread, x.description].filter(Boolean).join(' · '), s}); });
@@ -1583,7 +1679,7 @@ function renderSearch() {
   if (!q.trim()) { box.hidden = true; return; }
   sr = searchAll(q); srActive = 0;
   box.hidden = false;
-  box.innerHTML = sr.length ? sr.map((r, i) => `<a class="sr ${i === 0 ? 'active' : ''}" data-i="${i}" href="${href(r.kind, r.id || r.pn)}">${ico(r.kind, 'sm')}<span class="${r.kind === 'conjunto' ? '' : 'pn'}">${esc(r.pn)}</span><span class="small faint grow" style="overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${esc(r.sub)}</span>${tag(r.kind)}</a>`).join('')
+  box.innerHTML = sr.length ? sr.map((r, i) => `<a class="sr ${i === 0 ? 'active' : ''}" data-i="${i}" ${r.kind === 'peca' && r.id ? `data-base="${esc(r.id)}" data-pick="${esc(r.pn)}"` : ''} href="${href(r.kind, r.id || r.pn)}">${ico(r.kind, 'sm')}<span class="${r.kind === 'conjunto' ? '' : 'pn'}">${esc(r.pn)}</span><span class="small faint grow" style="overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${esc(r.sub)}</span>${tag(r.kind)}</a>`).join('')
     : `<div class="sr-empty">Nada encontrado para “${esc(q)}”.</div>`;
 }
 function closeSearch() { $('#qres').hidden = true; }
@@ -1601,7 +1697,7 @@ $('#q').addEventListener('keydown', e => {
     if (items[srActive]) { location.hash = items[srActive].getAttribute('href'); finishSearch(); }
   } else if (e.key === 'Escape') { finishSearch(); }
 });
-$('#qres').addEventListener('click', e => { if (e.target.closest('.sr')) finishSearch(); });
+$('#qres').addEventListener('click', e => { const r = e.target.closest('.sr'); if (!r) return; if (r.dataset.pick) v3dPick.set(r.dataset.base, r.dataset.pick); finishSearch(); });
 function finishSearch() { $('#q').value = ''; closeSearch(); $('#q').blur(); }
 
 /* ---------------- dialogs / forms ---------------- */
@@ -1658,6 +1754,7 @@ function openForm(o) {
     const v = {};
     for (const f of o.fields || []) {
       if (!f.name) continue;
+      if (f.type === 'checks') { v[f.name] = $$(`input[name="${f.name}"]:checked`, form).map(x => x.value); continue; }
       const el = form.elements[f.name];
       v[f.name] = f.type === 'checkbox' ? el.checked : el.value.trim();
       if (f.required && !v[f.name]) { err.textContent = `Preencha o campo “${f.label}”.`; err.hidden = false; el.focus(); return; }
@@ -1682,6 +1779,7 @@ function fieldHtml(f, vals) {
     <div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap"><button type="button" class="btn sm" data-m3d>${I.cube}Escolher 3DXML…</button><span class="small muted" data-m3d-label>${f.current ? 'Atual: ' + esc(f.current.name || f.current.file) : 'Nenhum modelo guardado'}</span></div>
     <input type="file" accept=".3dxml,.3DXML" hidden data-m3d-file><span class="field-hint" style="display:block">O modelo é guardado em base/modelos com o nome do PN e abre sozinho na página dele.</span></div>`;
   if (f.type === 'image') return `<div class="field"><span class="field-label">${esc(f.label)}</span><div class="imgpick" data-img="${f.name}" data-max="${f.max || 720}" tabindex="0" role="button"></div><input type="hidden" name="${f.name}" value="${esc(v)}"><input type="file" accept="image/*" hidden><span class="field-hint" style="display:block">${esc(f.hint || '')} <button type="button" class="linkbtn" data-img-clear>Remover imagem</button></span></div>`;
+  if (f.type === 'checks') return `<div class="field"><span class="field-label">${esc(f.label)}</span><div class="checks">${f.options.map(o => `<label><input type="checkbox" name="${f.name}" value="${esc(o.value)}" ${(Array.isArray(v) ? v : []).includes(o.value) ? 'checked' : ''}>${esc(o.label)}</label>`).join('')}</div></div>`;
   if (f.type === 'checkbox') return `<label class="check"><input type="checkbox" name="${f.name}" ${v ? 'checked' : ''}><span>${esc(f.label)}</span></label>`;
   let ctl;
   if (f.type === 'select') {
@@ -1794,16 +1892,18 @@ function partForm(p, asmName) {
     fields: [
       {name: 'pn', label: 'PN da peça', required: true, mono: true, placeholder: 'Ex.: CDPA689'},
       {name: 'description', label: 'Descrição', placeholder: 'Ex.: Painel lateral do bin'},
+      {name: 'kind', label: 'Tipo', type: 'select', options: KIND_OPTS, half: true},
+      {name: 'effectivity', label: 'Efetividade', half: true, placeholder: 'Aeronaves / números de série'},
       {name: 'assembly', label: 'Commodity', list: db.assemblies.map(a => a.name), placeholder: 'Ex.: Overhead Bin', hint: 'Digite um nome novo para criar uma commodity.'},
       {name: 'notes', label: 'Observações', type: 'textarea'},
       {type: 'model3d', current: p && p.model},
     ],
-    values: isNew ? {assembly: defAsm} : {pn: p.pn, description: p.description, assembly: idx.asm.get(p.assembly)?.name || '', notes: p.notes},
+    values: isNew ? {assembly: defAsm} : {pn: p.pn, description: p.description, kind: p.kind, effectivity: p.effectivity, assembly: idx.asm.get(p.assembly)?.name || '', notes: p.notes},
     onSubmit: async (v, form) => {
       const pn = normPn(v.pn);
       if (idx.part.has(pn) && (isNew || pn !== p.pn)) return `Já existe uma peça com o PN ${pn}.`;
       const t = p || {pn, inserts: []};
-      t.pn = pn; t.description = v.description; t.assembly = asmIdByName(v.assembly); t.notes = v.notes;
+      t.pn = pn; t.description = v.description; t.kind = v.kind; t.effectivity = v.effectivity; t.assembly = asmIdByName(v.assembly); t.notes = v.notes;
       const merr = await attachModel(t, form);
       if (merr) return merr;
       if (isNew) db.parts.push(t);
@@ -1981,6 +2081,12 @@ const ACT = {
     if (editing && !fs.ok && window.showDirectoryPicker) { toast('Primeiro conecte a pasta da base, para o 3D ficar guardado. Depois clique de novo em Adicionar 3DXML.', true); connectBase(); return; }
     v3dInput.click();
   },
+  'v3d-choose': d => { v3dPick.set(d.part, d.pn); renderMain(true); },
+  'add-variant': d => variantForm(idx.part.get(d.part), null),
+  'edit-variant': d => variantForm(idx.part.get(d.part), findVariant(d.pn)),
+  'delete-variant': d => confirmBox('Excluir este PN?', `<b class="mono">${esc(d.pn)}</b> sai da lista de PNs que usam <b class="mono">${esc(d.part)}</b>. O arquivo do modelo 3D continua na pasta base/modelos.`, 'Excluir', () => {
+    const p = idx.part.get(d.part); p.variants = (p.variants || []).filter(v => v.pn !== d.pn); models.delete(d.pn); commit('PN excluído');
+  }),
   'v3d-select': d => { const b = $('#v3d'), m = b && models.get(b.dataset.part); if (!m) return; m.sel = m.sel === +d.id ? -1 : +d.id; v3dApplySel(m, false); },
   'v3d-view': d => { if (v3d) v3d.view(d.view); },
   'v3d-edges': () => { if (v3d) v3d.toggleEdges(); },
