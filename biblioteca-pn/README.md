@@ -79,3 +79,11 @@ de instalação, servidor nem internet.
   para girar, mover e dar zoom. O arquivo é lido só no computador e, por enquanto, **não fica salvo** na biblioteca.
 - 3DXML binário (`format=UVR`) e `.cgr` não podem ser lidos pelo navegador. Use o `Inspetor_3DXML.html` para conferir
   o tipo de exportação de um arquivo.
+
+### Capturas do MBD
+
+- O CATIA não grava o FT&A no 3DXML tesselado, então as cotas entram como **capturas**: na página da peça, com o
+  Modo edição ligado, tire um print da captura do FT&A (Win+Shift+S) e cole com **Ctrl+V** direto na página, ou use
+  **Adicionar captura**. Dê um nome a cada vista pelo lápis.
+- Quem consulta clica na miniatura para ampliar; clicar na imagem ampliada mostra em tamanho real.
+- As capturas ficam salvas na biblioteca. O navegador guarda em torno de 5 MB; use **Salvar como HTML** com frequência.
