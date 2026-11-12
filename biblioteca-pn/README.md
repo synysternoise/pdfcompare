@@ -72,3 +72,10 @@ de instalação, servidor nem internet.
 - Cada commodity tem um desenho próprio. No Modo edição, use o lápis no botão da commodity para trocar o
   nome, o nome curto do botão (ex.: `OHBin`), o desenho, ou colar uma **foto/print** (Ctrl+V) no lugar dele.
 - A imagem é reduzida e guardada dentro do próprio arquivo (não precisa de pasta de imagens).
+
+### Modelo 3D (3DXML)
+
+- Na página de cada peça há o quadro **Modelo 3D**: arraste um `.3dxml` **tesselado** (geometria em XML) e ele abre ali,
+  para girar, mover e dar zoom. O arquivo é lido só no computador e, por enquanto, **não fica salvo** na biblioteca.
+- 3DXML binário (`format=UVR`) e `.cgr` não podem ser lidos pelo navegador. Use o `Inspetor_3DXML.html` para conferir
+  o tipo de exportação de um arquivo.
