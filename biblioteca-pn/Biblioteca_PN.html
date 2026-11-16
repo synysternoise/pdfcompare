@@ -236,7 +236,7 @@ main{overflow:auto;padding:28px 36px 80px;min-width:0}
 .tree-bar .right{margin-left:auto;display:flex;gap:6px;align-items:center;flex-wrap:wrap}
 .tree-hint{display:flex;gap:8px;align-items:center;margin:12px 14px 0;padding:8px 12px;border-radius:9px;background:var(--surface-2);color:var(--text-2);font-size:12.5px}
 .tree-hint svg{width:15px;height:15px;color:var(--text-3)}
-.tree-scroll{padding:22px 12px 30px;border-radius:0 0 14px 14px;background-image:radial-gradient(var(--border) 1px,transparent 1px);background-size:18px 18px}
+.tree-scroll{padding:22px 12px 30px;border-radius:14px;background-image:radial-gradient(var(--border) 1px,transparent 1px);background-size:18px 18px}
 .tree{width:max-content;min-width:100%}
 .tree ul{display:flex;justify-content:center;margin:0;padding:24px 0 0;position:relative}
 .tree>ul{padding-top:0}
@@ -751,11 +751,7 @@ function asmTree(id, withActions = true) {
   let kids = list.map(p => partLi(p, false)).join('');
   if (!list.length && !editing) kids += `<li><div class="node empty">Nenhuma peça</div></li>`;
   if (editing) kids += ghost('new-part', dattr({asm: a ? a.name : ''}), 'Peça nova') + (a ? ghost('add-existing-part', dattr({asm: id}), 'Peça existente') : '');
-  const A = dattr({asm: id});
-  return `<div class="tree-card"><div class="tree-bar">${I.conjunto}<b>${esc(name)}</b><span class="faint small">${plural(list.length, 'peça')} · clique numa peça para abrir os insertos</span>
-    <div class="right">${a && withActions ? editBtn('edit-assembly', dattr({id}), 'Editar commodity') + delBtn('delete-assembly', dattr({id}), 'Excluir commodity') : ''}
-    <button class="btn sm" data-act="tree-all" ${A} data-open="1">Expandir tudo</button><button class="btn sm ghost" data-act="tree-all" ${A} data-open="">Recolher</button></div></div>
-    ${treeWrap(`<li>${root}<ul>${kids}</ul></li>`)}</div>`;
+  return `<div class="tree-card">${treeWrap(`<li>${root}<ul>${kids}</ul></li>`)}</div>`;
 }
 function partLi(p, force) {
   const open = force || openParts.has(p.pn);
@@ -2148,12 +2144,6 @@ const ACT = {
   },
   'tree-part': d => { openParts.has(d.part) ? openParts.delete(d.part) : openParts.add(d.part); renderMain(true); },
   'tree-ins': d => { closedIns.has(d.key) ? closedIns.delete(d.key) : closedIns.add(d.key); renderMain(true); },
-  'tree-all': d => {
-    (idx.asmParts.get(d.asm) || []).forEach(p => {
-      if (d.open) { openParts.add(p.pn); p.inserts.forEach(e => closedIns.delete(p.pn + '|' + e.insert)); } else openParts.delete(p.pn);
-    });
-    renderMain(true);
-  },
   'edit-part': d => partForm(idx.part.get(d.part)),
   'delete-part': d => confirmBox('Excluir peça?', `A peça <b class="mono">${esc(d.part)}</b> e suas indicações serão removidas. Insertos e parafusos continuam no catálogo.`, 'Excluir', () => {
     db.parts = db.parts.filter(p => p.pn !== d.part); commit(`Peça ${d.part} excluída`); go('', '');
