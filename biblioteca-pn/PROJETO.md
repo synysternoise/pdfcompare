@@ -41,6 +41,9 @@ Tudo num IIFE, JavaScript puro, sem framework. Renderização por *template stri
 - **Dados** (`db`): `assemblies` (commodities: `id, name, short, art, image, description`), `parts`
   (`pn, description, assembly, notes, inserts:[{insert, preferred, note, screws:[pn]}], captures:[{name,img}]`),
   `inserts` (`pn, thread, description`), `screws` (`pn, head, thread, description`), `editLock`, `updatedAt`.
+- **Peça em várias commodities:** `p.assemblies` é a lista de ids (`p.assembly` continua existindo como a primeira,
+  por compatibilidade; `normalize` migra dados antigos). Use `partAsmIds(p)`, `asmNames(p)` e `setAsms(p, ids)`.
+  Cadastrar um PN que já existe não dá erro: a peça entra também nas commodities marcadas.
 - **Peça:** também tem `kind` (`extrudado|fabricado|hardware`), `effectivity`, `model` e `variants` — os PNs que
   usam a peça-base: `[{pn, kind, description, commodities:[ids], effectivity, notes, model}]`. Modelos 3D são
   guardados por PN (peça, variante, inserto ou parafuso); `anyItem(pn)` acha qualquer um deles.
@@ -84,6 +87,9 @@ Tudo num IIFE, JavaScript puro, sem framework. Renderização por *template stri
   `.ln` (linha forte), `.lt` (linha fina), `.ac` (destaque preenchido), `.as` (destaque em traço).
   Desenhar a partir de foto/print real enviado pelo usuário, nunca de memória.
 - **Texto da interface:** direto, em português, verbos de ação nos botões, sem jargão de sistema.
+- **Decisões do usuário sobre layout:** a árvore não tem barra de rolagem própria (se ficar larga, quem rola é a
+  página, com a barra da árvore fixa à esquerda); a ficha técnica fica **acima** do 3D, nunca flutuando sobre ele;
+  os grupos da barra lateral são recolhíveis.
 - **Responsivo:** funciona em ~390 px sem rolagem lateral da página; só a árvore e tabelas rolam por dentro.
 
 ## Como trabalhar

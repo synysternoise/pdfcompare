@@ -117,3 +117,16 @@ Biblioteca_PN\
   **Adicionar PN que usa …** e preencha PN, tipo, descrição, commodities (uma ou mais), efetividade e o 3DXML.
 - Quem consulta abre a peça, **escolhe o PN** na lista e vê o 3D com a **ficha técnica** no canto inferior esquerdo.
 - A busca do topo também encontra esses PNs.
+
+### Mesma peça em mais de uma commodity
+
+- No Modo edição, dentro da árvore de uma commodity: **Peça existente** adiciona ali uma peça que já está cadastrada
+  em outra commodity. Ela aparece nas duas, com os mesmos insertos e parafusos (é a mesma peça, não uma cópia).
+- No lápis da peça, marque ou desmarque as commodities em que ela aparece.
+- Se você tentar criar uma peça com um PN que já existe, ela é adicionada às commodities marcadas em vez de dar erro.
+
+### Barra lateral
+
+- A seta ao lado do nome de cada commodity recolhe ou mostra as peças dela; o botão ao lado do filtro recolhe ou
+  expande todas de uma vez.
+- **Só sem inserto** mostra apenas as peças que ainda não têm inserto indicado.
