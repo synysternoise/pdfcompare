@@ -130,3 +130,14 @@ Biblioteca_PN\
 - A seta ao lado do nome de cada commodity recolhe ou mostra as peças dela; o botão ao lado do filtro recolhe ou
   expande todas de uma vez.
 - **Só sem inserto** mostra apenas as peças que ainda não têm inserto indicado.
+
+### 3D da commodity inteira (ex.: o bin) com os painéis clicáveis
+
+- Modo edição › página da commodity › **Adicionar 3DXML de …** (ou o lápis da commodity › *Modelo 3D da commodity*).
+  O modelo fica guardado em `base/modelos/COMMODITY-<ID>.js` e abre sozinho para todos.
+- Clique num painel no 3D (ou na lista de componentes): ele fica azul e aparece o botão **Abrir CDPA…**.
+  **Duplo clique** no painel abre a página da peça direto.
+- A ligação é automática quando o nome do componente no CATIA é o PN da peça (aceita `CDPA689`, `CDPA689.1`…),
+  ou o PN de um "PN que usa" a peça. Clicar num item dentro do painel (um inserto, por exemplo) também abre o painel.
+- Se o nome não bater, no Modo edição aparece **Ligar “nome” a uma peça**: escolha o PN uma vez e fica gravado.
+  Vale para todos os componentes com o mesmo nome. **Desligar** desfaz.

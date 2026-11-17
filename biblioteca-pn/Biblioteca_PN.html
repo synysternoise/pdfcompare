@@ -346,6 +346,10 @@ svg.art .as{fill:none;stroke:var(--accent);stroke-width:2.2;stroke-linecap:round
 .v3d-help{position:absolute;left:12px;right:12px;bottom:10px;text-align:right;font-size:12px;color:var(--text-3);pointer-events:none}
 @media (max-width:900px){.v3d{height:360px}.v3d-help{display:none}}
 
+.v3d-act{position:absolute;left:12px;top:46px;display:flex;gap:6px;flex-wrap:wrap;max-width:calc(100% - 24px);z-index:2}
+.v3d-act .btn svg{width:14px;height:14px}
+.v3d-nolink{font-size:12px;padding:4px 10px;border-radius:999px;background:var(--surface);border:1px dashed var(--border-strong);color:var(--text-3)}
+
 /* PN selector + ficha técnica */
 .pnsel{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:12px}
 .pnopt{display:flex;flex-direction:column;align-items:flex-start;gap:3px;padding:9px 14px;border:1.5px solid var(--border-strong);border-radius:10px;background:var(--surface);cursor:pointer;font:inherit;color:inherit;text-align:left;min-width:160px;box-shadow:var(--shadow);transition:border-color .12s,box-shadow .12s}
@@ -846,7 +850,7 @@ function viewAssembly(id) {
       chips: a.short && a.short !== a.name ? `<span class="chip">${esc(a.short)}</span>` : '',
       actions: `${editBtn('edit-assembly', dattr({id}), 'Editar commodity')}${delBtn('delete-assembly', dattr({id}), 'Excluir commodity')}<button class="btn primary edit-only" data-act="new-part">${I.plus}Nova peça</button>`}) +
     `<div class="stats">${stat('peca', list.length, 'peças')}${stat('inserto', withIns, 'com inserto indicado')}${stat('conjunto', list.length - withIns, 'sem indicação', list.length - withIns ? 'warn' : '')}</div>` +
-    asmTree(id, false);
+    v3dSection(a, '', asmKey(id), a.name, id) + `<div class="section">${asmTree(id, false)}</div>`;
 }
 
 function viewPart(pn) {
@@ -1062,15 +1066,15 @@ window.BIBLIOTECA_MODELO = (pn, d) => {
   const b = $('#v3d');
   if (b && b.dataset.part === pn) renderMain(true);
 };
-function loadStoredModel(p, box) {
-  if (modelFail.has(p.pn)) { box.querySelector('.v3d-drop div').innerHTML = `<b>O modelo 3D desta peça não está na pasta</b>Era esperado em base/modelos/${esc(p.model.file)}. Arraste o .3dxml aqui para abrir.`; return; }
+function loadStoredModel(p, box, key = box.dataset.part) {
+  if (modelFail.has(key)) { box.querySelector('.v3d-drop div').innerHTML = `<b>O modelo 3D desta peça não está na pasta</b>Era esperado em base/modelos/${esc(p.model.file)}. Arraste o .3dxml aqui para abrir.`; return; }
   box.querySelector('.v3d-drop div').innerHTML = '<b>Carregando o modelo 3D…</b>';
-  if (modelLoading.has(p.pn)) return;
-  modelLoading.add(p.pn);
+  if (modelLoading.has(key)) return;
+  modelLoading.add(key);
   const sc = document.createElement('script');
   sc.src = 'base/modelos/' + encodeURIComponent(p.model.file) + '?v=' + encodeURIComponent(p.model.at || '');
   sc.onload = () => sc.remove();
-  sc.onerror = () => { sc.remove(); modelLoading.delete(p.pn); modelFail.add(p.pn); const b = $('#v3d'); if (b && b.dataset.part === p.pn) renderMain(true); };
+  sc.onerror = () => { sc.remove(); modelLoading.delete(key); modelFail.add(key); const b = $('#v3d'); if (b && b.dataset.part === key) renderMain(true); };
   document.head.appendChild(sc);
 }
 
@@ -1079,7 +1083,9 @@ const KINDS = {extrudado: 'Extrudado', fabricado: 'Fabricado', hardware: 'Hardwa
 const KIND_OPTS = [{value: '', label: '—'}, ...Object.entries(KINDS).map(([value, label]) => ({value, label}))];
 const kindChip = k => KINDS[k] ? `<span class="chip kind">${KINDS[k]}</span>` : '';
 const findVariant = pn => { for (const p of db.parts) for (const v of p.variants || []) if (v.pn === pn) return v; return null; };
-const anyItem = pn => idx.part.get(pn) || idx.ins.get(pn) || idx.scr.get(pn) || findVariant(pn);
+const asmKey = id => 'COMMODITY-' + String(id).toUpperCase();
+const anyItem = pn => idx.part.get(pn) || idx.ins.get(pn) || idx.scr.get(pn) || findVariant(pn)
+  || (String(pn).startsWith('COMMODITY-') ? db.assemblies.find(a => asmKey(a.id) === pn) : null);
 const v3dPick = new Map();       // PN da peça -> PN escolhido para ver no 3D
 const models = new Map();          // PN -> modelo em memória (vem de base/modelos ou de um arquivo aberto na hora)
 let v3dNoTree = false;
@@ -1399,16 +1405,16 @@ function createViewer(box, model, onPick) {
   redraw();
   return api;
 }
-function v3dSection(p, ficha = '') {
-  const m = models.get(p.pn);
+function v3dSection(p, ficha = '', key = p.pn, label = key, asm = '') {
+  const m = models.get(key);
   // Sem modelo: quem consulta não vê nada; quem edita vê só o botão para ligar um 3DXML a este PN.
-  if (!m && !p.model) return editing ? `<div class="section"><div class="section-head">${I.cube}<h2>Modelo 3D</h2><span class="muted">${esc(p.pn)} ainda não tem modelo</span>
-    <div class="right"><button class="btn primary sm" data-act="v3d-open">${I.plus}Adicionar 3DXML a ${esc(p.pn)}</button></div></div><div id="v3d" data-part="${esc(p.pn)}" hidden></div></div>` : '';
+  if (!m && !p.model) return editing ? `<div class="section"><div class="section-head">${I.cube}<h2>Modelo 3D</h2><span class="muted">${esc(label)} ainda não tem modelo</span>
+    <div class="right"><button class="btn primary sm" data-act="v3d-open">${I.plus}Adicionar 3DXML de ${esc(label)}</button></div></div><div id="v3d" data-part="${esc(key)}" hidden></div></div>` : '';
   const vb = (v, label) => `<button class="btn sm ghost" data-act="v3d-view" data-view="${v}">${label}</button>`;
   return `<div class="section"><div class="section-head">${I.cube}<h2>Modelo 3D</h2><span class="muted">${m ? esc(m.name) : '3DXML tesselado, aberto deste computador'}</span>
-    <div class="right">${m ? vb('iso', 'Iso') + vb('frente', 'Frente') + vb('topo', 'Topo') + vb('lado', 'Lado') + `<button class="btn sm ghost" data-act="v3d-edges">Arestas</button><button class="btn sm ghost" data-act="v3d-tree">Componentes</button>` : ''}${p.model ? `<button class="btn sm ghost edit-only" data-act="v3d-remove" data-part="${esc(p.pn)}">Remover 3D</button>` : ''}<button class="btn sm ${p.model ? 'edit-only' : ''}" data-act="v3d-open">${m || p.model ? 'Trocar arquivo' : 'Abrir 3DXML'}</button></div></div>
-    <div class="card v3d ${m ? 'has-model' : ''} ${v3dNoTree ? 'no-tree' : ''}" id="v3d" data-part="${esc(p.pn)}">${m ? `<div class="v3d-tree" id="v3dTree"><div class="label">Componentes</div>${m.nodes.filter(n => !n.parent && n.all.length).map(n => vtRows(n, 0)).join('')}</div>
-      <div class="v3d-stage" id="v3dStage">${ficha}<div class="v3d-sel" id="v3dSel"></div><div class="v3d-info">${(m.pos.length / 9).toLocaleString('pt-BR')} triângulos · ${plural(m.parts, 'corpo')}</div><div class="v3d-help">como no CATIA: meio = mover · meio + esquerdo = girar · meio + clique esquerdo e arrastar = zoom · clique = selecionar · duplo clique = centralizar</div></div>`
+    <div class="right">${m ? vb('iso', 'Iso') + vb('frente', 'Frente') + vb('topo', 'Topo') + vb('lado', 'Lado') + `<button class="btn sm ghost" data-act="v3d-edges">Arestas</button><button class="btn sm ghost" data-act="v3d-tree">Componentes</button>` : ''}${p.model ? `<button class="btn sm ghost edit-only" data-act="v3d-remove" data-part="${esc(key)}">Remover 3D</button>` : ''}<button class="btn sm ${p.model ? 'edit-only' : ''}" data-act="v3d-open">${m || p.model ? 'Trocar arquivo' : 'Abrir 3DXML'}</button></div></div>
+    <div class="card v3d ${m ? 'has-model' : ''} ${v3dNoTree ? 'no-tree' : ''}" id="v3d" data-part="${esc(key)}" ${asm ? `data-asm="${esc(asm)}"` : ''}>${m ? `<div class="v3d-tree" id="v3dTree"><div class="label">Componentes</div>${m.nodes.filter(n => !n.parent && n.all.length).map(n => vtRows(n, 0)).join('')}</div>
+      <div class="v3d-stage" id="v3dStage">${ficha}${asm ? '<div class="v3d-act" id="v3dAct"></div>' : ''}<div class="v3d-sel" id="v3dSel"></div><div class="v3d-info">${(m.pos.length / 9).toLocaleString('pt-BR')} triângulos · ${plural(m.parts, 'corpo')}</div><div class="v3d-help">como no CATIA: meio = mover · meio + esquerdo = girar · meio + clique esquerdo e arrastar = zoom · ${asm ? 'clique num painel = selecionar · duplo clique = abrir a peça' : 'clique = selecionar · duplo clique = centralizar'}</div></div>`
       : `<div class="v3d-drop" style="cursor:default"><div></div></div>`}</div></div>`;
 }
 function fichaHtml(base, it) {
@@ -1533,12 +1539,42 @@ document.addEventListener('paste', async e => {
 function vtRows(n, depth) {
   return `<button class="vt-row" data-act="v3d-select" data-id="${n.id}" style="padding-left:${6 + depth * 14}px">${n.children.length ? I.conjunto : I.cube}<span>${esc(n.name)}</span></button>` + n.children.map(c => vtRows(c, depth + 1)).join('');
 }
+// PN da biblioteca (peça ou PN que usa uma peça) -> peça-base
+function pnIndex() {
+  const mp = new Map();
+  db.parts.forEach(p => { mp.set(normPn(p.pn), {pn: p.pn, base: p.pn}); (p.variants || []).forEach(v => mp.set(normPn(v.pn), {pn: v.pn, base: p.pn})); });
+  return mp;
+}
+// Componente do 3D da commodity -> peça: ligação manual, ou nome igual ao PN (ignora sufixo de instância "CDPA689.1")
+function linkOf(a, n) {
+  const mp = pnIndex(), links = a.links || {};
+  for (let x = n; x; x = x.parent) {
+    if (links[x.name]) { const t = mp.get(normPn(links[x.name])); if (t) return {...t, node: x, manual: true}; }
+    const k = normPn(x.name), t = mp.get(k) || mp.get(k.replace(/[.\s_(].*$/, ''));
+    if (t) return {...t, node: x};
+  }
+  return null;
+}
+function openLinked(base, pn) {
+  if (pn && pn !== base) v3dPick.set(base, pn);
+  go('peca', base);
+}
+function renderAsmAct(n) {
+  const box = $('#v3dAct'), a = box && idx.asm.get($('#v3d').dataset.asm);
+  if (!box || !a) return;
+  const ln = n ? linkOf(a, n) : null;
+  box.innerHTML = !n ? ''
+    : ln ? `<button class="btn primary sm" data-act="v3d-open-link" ${dattr({base: ln.base, pn: ln.pn})}>Abrir ${esc(ln.pn)}${I.go}</button>${ln.manual ? `<button class="btn sm edit-only" data-act="v3d-unlink" ${dattr({name: ln.node.name})}>Desligar</button>` : ''}`
+    : editing ? `<button class="btn sm" data-act="v3d-link" ${dattr({name: n.name})}>${I.plus}Ligar “${esc(n.name)}” a uma peça</button>`
+    : `<span class="v3d-nolink">Este componente ainda não está ligado a uma peça da biblioteca</span>`;
+}
 function v3dApplySel(m, scroll) {
   const n = m.nodes[m.sel];
   $$('#v3dTree .vt-row').forEach(b => b.classList.toggle('active', +b.dataset.id === m.sel));
   if (v3d) v3d.select(n ? n.all : []);
   const lab = $('#v3dSel');
   if (lab) { lab.textContent = n ? n.name : 'Clique num componente no 3D ou na lista'; lab.classList.toggle('on', !!n); }
+  renderAsmAct(n);
   const act = scroll && $('#v3dTree .vt-row.active');
   if (act) act.scrollIntoView({block: 'nearest'});
 }
@@ -1551,10 +1587,14 @@ function mountV3d() {
     if (p && p.model) loadStoredModel(p, box);
     return;
   }
+  const asmA = box.dataset.asm ? idx.asm.get(box.dataset.asm) : null;
   const onPick = (vi, focus) => {
-    const hit = vi < 0 ? null : m.nodes.find(n => n.ranges.some(([a, c]) => vi >= a && vi < a + c));
+    let hit = vi < 0 ? null : m.nodes.find(n => n.ranges.some(([a, c]) => vi >= a && vi < a + c));
+    const ln = asmA && hit ? linkOf(asmA, hit) : null;
+    if (ln) hit = ln.node;                       // no 3D da commodity, seleciona o painel inteiro
     m.sel = hit ? hit.id : -1;
     v3dApplySel(m, true);
+    if (focus && ln) { openLinked(ln.base, ln.pn); return; }
     if (focus && v3d) hit ? v3d.focus(hit.all) : v3d.fit();
   };
   try { v3d = createViewer($('#v3dStage'), m, onPick); v3dApplySel(m, false); } catch (x) { box.innerHTML = `<div class="v3d-drop"><div><b>Não consegui abrir o 3D</b>${esc(x.message)}</div></div>`; }
@@ -1794,7 +1834,7 @@ function fieldHtml(f, vals) {
   const v = vals[f.name] ?? '';
   const id = 'f_' + f.name;
   if (f.type === 'info') return `<div class="form-info">${f.html}</div>`;
-  if (f.type === 'model3d') return `<div class="field"><span class="field-label">Modelo 3D deste PN (3DXML tesselado)</span>
+  if (f.type === 'model3d') return `<div class="field"><span class="field-label">${esc(f.label || 'Modelo 3D deste PN (3DXML tesselado)')}</span>
     <div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap"><button type="button" class="btn sm" data-m3d>${I.cube}Escolher 3DXML…</button><span class="small muted" data-m3d-label>${f.current ? 'Atual: ' + esc(f.current.name || f.current.file) : 'Nenhum modelo guardado'}</span></div>
     <input type="file" accept=".3dxml,.3DXML" hidden data-m3d-file><span class="field-hint" style="display:block">O modelo é guardado em base/modelos com o nome do PN e abre sozinho na página dele.</span></div>`;
   if (f.type === 'image') return `<div class="field"><span class="field-label">${esc(f.label)}</span><div class="imgpick" data-img="${f.name}" data-max="${f.max || 720}" tabindex="0" role="button"></div><input type="hidden" name="${f.name}" value="${esc(v)}"><input type="file" accept="image/*" hidden><span class="field-hint" style="display:block">${esc(f.hint || '')} <button type="button" class="linkbtn" data-img-clear>Remover imagem</button></span></div>`;
@@ -1890,13 +1930,13 @@ function passwordForm() {
 }
 
 // grava o 3DXML escolhido no formulário como modelo do PN (peça, inserto ou parafuso)
-async function attachModel(item, form) {
+async function attachModel(item, form, key = item && item.pn) {
   const m = form && form._model;
   if (!m || !item) return '';
   if (!fs.ok) return 'Para guardar o 3D, conecte antes a pasta da base (Dados › Conectar pasta da base).';
-  try { item.model = {file: await saveModelFile(item.pn, m), name: m.name, at: new Date().toISOString()}; }
+  try { item.model = {file: await saveModelFile(key, m), name: m.name, at: new Date().toISOString()}; }
   catch (x) { return 'Não consegui gravar o modelo na pasta: ' + (x && x.message || x); }
-  models.set(item.pn, m); modelFail.delete(item.pn);
+  models.set(key, m); modelFail.delete(key);
   return '';
 }
 
@@ -2057,6 +2097,7 @@ function assemblyForm(a) {
       {name: 'description', label: 'Descrição'},
       {name: 'art', label: 'Desenho', type: 'select', options: Object.entries(ART_LABEL).map(([value, label]) => ({value, label}))},
       {name: 'image', label: 'Foto ou print (opcional, substitui o desenho)', type: 'image', hint: 'Tire um print (Win+Shift+S) e cole aqui com Ctrl+V, ou arraste um arquivo.'},
+      {type: 'model3d', label: 'Modelo 3D da commodity inteira (3DXML tesselado)', current: a && a.model},
     ],
     values: a ? {...a, art: artKey(a)} : {art: 'generic'},
     onInput: a ? null : form => {
@@ -2064,10 +2105,12 @@ function assemblyForm(a) {
       if (!sel.dataset.wired) { sel.dataset.wired = '1'; sel.addEventListener('change', () => { sel.dataset.touched = '1'; }); }
       if (!sel.dataset.touched) sel.value = artGuess(form.elements.name.value);
     },
-    onSubmit: v => {
+    onSubmit: async (v, form) => {
       if (db.assemblies.some(x => x !== a && fold(x.name) === fold(v.name))) return 'Já existe uma commodity com esse nome.';
       const t = a || db.assemblies.find(x => x.id === asmIdByName(v.name));
       Object.assign(t, {name: v.name, short: v.short, description: v.description, art: v.art, image: v.image});
+      const merr = await attachModel(t, form, asmKey(t.id));
+      if (merr) return merr;
       commit(a ? 'Commodity atualizada' : `Commodity ${v.name} criada`);
       if (!a) go('conjunto', t.id);
     },
@@ -2109,8 +2152,34 @@ const ACT = {
   'save-base': () => requireUnlock(saveBase),
   'v3d-tree': () => { v3dNoTree = !v3dNoTree; const b = $('#v3d'); if (b) b.classList.toggle('no-tree', v3dNoTree); },
   'v3d-remove': d => confirmBox('Remover o modelo 3D deste PN?', 'Ele deixa de abrir o 3D sozinho. O arquivo do modelo continua na pasta base/modelos.', 'Remover', () => {
-    const p = anyItem(d.part); delete p.model; models.delete(p.pn); commit('Modelo 3D removido');
+    const p = anyItem(d.part); delete p.model; models.delete(d.part); commit('Modelo 3D removido');
   }),
+  'v3d-open-link': d => openLinked(d.base, d.pn),
+  'v3d-unlink': d => {
+    const a = idx.asm.get($('#v3d').dataset.asm);
+    if (!a || !a.links) return;
+    delete a.links[d.name]; commit(`${d.name} desligado`);
+  },
+  'v3d-link': d => {
+    const a = idx.asm.get($('#v3d').dataset.asm);
+    const opts = [];
+    db.parts.slice().sort((x, y) => cmp(x.pn, y.pn)).forEach(p => {
+      opts.push({value: p.pn, label: p.description || ''});
+      (p.variants || []).forEach(v => opts.push({value: v.pn, label: 'usa ' + p.pn + (v.description ? ' · ' + v.description : '')}));
+    });
+    openForm({
+      title: 'Ligar componente a uma peça',
+      subtitle: d.name,
+      submit: 'Ligar',
+      fields: [{name: 'pn', label: 'PN da peça na biblioteca', required: true, mono: true, list: opts, hint: 'Ao clicar neste componente no 3D, a biblioteca abre esta peça. Vale para todos os componentes com este mesmo nome.'}],
+      onSubmit: v => {
+        const pn = normPn(v.pn);
+        if (!pnIndex().has(pn)) return `${pn} não está na biblioteca. Cadastre a peça antes de ligar.`;
+        a.links = {...(a.links || {}), [d.name]: pn};
+        commit(`${d.name} ligado a ${pn}`);
+      },
+    });
+  },
   'v3d-open': () => {
     if (editing && !fs.ok && window.showDirectoryPicker) { toast('Primeiro conecte a pasta da base, para o 3D ficar guardado. Depois clique de novo em Adicionar 3DXML.', true); connectBase(); return; }
     v3dInput.click();

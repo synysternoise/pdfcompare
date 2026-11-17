@@ -47,6 +47,9 @@ Tudo num IIFE, JavaScript puro, sem framework. Renderização por *template stri
 - **Peça:** também tem `kind` (`extrudado|fabricado|hardware`), `effectivity`, `model` e `variants` — os PNs que
   usam a peça-base: `[{pn, kind, description, commodities:[ids], effectivity, notes, model}]`. Modelos 3D são
   guardados por PN (peça, variante, inserto ou parafuso); `anyItem(pn)` acha qualquer um deles.
+- **3D da commodity:** `assembly.model` (arquivo `COMMODITY-<ID>.js`, chave `asmKey(id)`; `anyItem` resolve essa
+  chave) e `assembly.links = {nomeDoComponente: PN}`. `linkOf(a, node)` sobe na árvore do componente procurando
+  ligação manual ou nome igual a um PN de peça/variante (`pnIndex`). `v3dSection(item, ficha, key, label, asm)`.
 - **Persistência:** edições vão para `localStorage` como `{base, data}`; `base` é o `updatedAt` do arquivo em que
   foram feitas. Arquivo mais novo que as edições → as edições viram *backup* recuperável (não se perdem).
   "Salvar como HTML" regrava o `seed-data` num novo arquivo.
