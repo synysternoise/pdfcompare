@@ -1,0 +1,2391 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Biblioteca de PNs</title>
+<style>
+:root{
+  --bg:#f3f5f8; --surface:#ffffff; --surface-2:#f8f9fb; --surface-3:#eef1f5;
+  --border:#e2e6ec; --border-strong:#c9d0da;
+  --text:#101828; --text-2:#475467; --text-3:#7a8698;
+  --accent:#2457e6; --accent-soft:#e9effd; --accent-text:#1d47bf;
+  --part:#2457e6; --part-soft:#e9effd; --part-text:#1d47bf;
+  --insert:#d07a0a; --insert-soft:#fdf1e1; --insert-text:#9a5500;
+  --screw:#7c3aed; --screw-soft:#f2ebfe; --screw-text:#6227c9;
+  --ok:#12805c; --warn:#b54708; --warn-soft:#fef3e7;
+  --danger:#d92d20; --danger-soft:#fdeceb;
+  --line:#aab4c3;
+  --shadow:0 1px 2px rgba(16,24,40,.05),0 1px 3px rgba(16,24,40,.07);
+  --shadow-lg:0 12px 32px rgba(16,24,40,.16),0 2px 6px rgba(16,24,40,.08);
+  --mono:ui-monospace,"Cascadia Mono","Cascadia Code",Consolas,"SFMono-Regular",Menlo,monospace;
+  --sans:"Segoe UI Variable Text","Segoe UI",system-ui,-apple-system,Roboto,"Helvetica Neue",Arial,sans-serif;
+  color-scheme:light;
+}
+@media (prefers-color-scheme: dark){
+  :root:not([data-theme="light"]){
+    --bg:#0f1218; --surface:#171b23; --surface-2:#1c212b; --surface-3:#232935;
+    --border:#2a3140; --border-strong:#3a4356;
+    --text:#e8ecf3; --text-2:#aab3c2; --text-3:#7d8799;
+    --accent:#6b8fff; --accent-soft:#1e2a4a; --accent-text:#9db4ff;
+    --part:#6b8fff; --part-soft:#1e2a4a; --part-text:#9db4ff;
+    --insert:#f0a03c; --insert-soft:#3a2a14; --insert-text:#f5b866;
+    --screw:#a98bff; --screw-soft:#2b2247; --screw-text:#c4b0ff;
+    --ok:#3ccb8f; --warn:#f0a03c; --warn-soft:#3a2a14;
+    --danger:#ff6b5e; --danger-soft:#3d1d1b;
+    --shadow:0 1px 2px rgba(0,0,0,.3); --shadow-lg:0 16px 40px rgba(0,0,0,.5); --line:#4a5468;
+    color-scheme:dark;
+  }
+}
+:root[data-theme="dark"]{
+  --bg:#0f1218; --surface:#171b23; --surface-2:#1c212b; --surface-3:#232935;
+  --border:#2a3140; --border-strong:#3a4356;
+  --text:#e8ecf3; --text-2:#aab3c2; --text-3:#7d8799;
+  --accent:#6b8fff; --accent-soft:#1e2a4a; --accent-text:#9db4ff;
+  --part:#6b8fff; --part-soft:#1e2a4a; --part-text:#9db4ff;
+  --insert:#f0a03c; --insert-soft:#3a2a14; --insert-text:#f5b866;
+  --screw:#a98bff; --screw-soft:#2b2247; --screw-text:#c4b0ff;
+  --ok:#3ccb8f; --warn:#f0a03c; --warn-soft:#3a2a14;
+  --danger:#ff6b5e; --danger-soft:#3d1d1b;
+  --shadow:0 1px 2px rgba(0,0,0,.3); --shadow-lg:0 16px 40px rgba(0,0,0,.5); --line:#4a5468;
+  color-scheme:dark;
+}
+
+*{box-sizing:border-box}
+html,body{height:100%}
+body{margin:0;background:var(--bg);color:var(--text);font:14px/1.5 var(--sans);-webkit-font-smoothing:antialiased}
+a{color:inherit;text-decoration:none}
+button{font:inherit;color:inherit}
+svg{width:18px;height:18px;flex:none;fill:none;stroke:currentColor;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round}
+.mono,.pn{font-family:var(--mono)}
+.muted{color:var(--text-2)}
+.faint{color:var(--text-3)}
+.small{font-size:12.5px}
+.grow{flex:1;min-width:0}
+[hidden]{display:none!important}
+
+/* ---------- layout ---------- */
+.app{display:grid;grid-template-columns:300px minmax(0,1fr);grid-template-rows:58px minmax(0,1fr);height:100vh}
+.topbar{grid-column:1/-1;display:flex;align-items:center;gap:14px;padding:0 16px;background:var(--surface);border-bottom:1px solid var(--border);position:relative;z-index:20}
+.brand{display:flex;align-items:center;gap:10px;font-weight:650;font-size:15px;white-space:nowrap}
+.brand-mark{width:32px;height:32px;border-radius:9px;display:grid;place-items:center;background:linear-gradient(135deg,var(--accent),var(--screw));color:#fff}
+.brand-mark svg{width:18px;height:18px;stroke-width:2}
+.brand small{display:block;font-weight:400;font-size:11.5px;color:var(--text-3);line-height:1.1}
+.search{position:relative;flex:1;max-width:560px;margin-left:12px}
+.search>svg{position:absolute;left:11px;top:50%;transform:translateY(-50%);color:var(--text-3);width:16px;height:16px}
+.search input{width:100%;height:38px;border-radius:10px;border:1px solid var(--border);background:var(--surface-2);padding:0 44px 0 34px;font:inherit;color:var(--text);outline:none;transition:border-color .15s,box-shadow .15s,background .15s}
+.search input:focus{border-color:var(--accent);background:var(--surface);box-shadow:0 0 0 3px var(--accent-soft)}
+.search kbd{position:absolute;right:10px;top:50%;transform:translateY(-50%)}
+kbd{font:11px var(--mono);border:1px solid var(--border-strong);border-bottom-width:2px;border-radius:5px;padding:1px 6px;color:var(--text-3);background:var(--surface)}
+.search-results{position:absolute;left:0;right:0;top:44px;background:var(--surface);border:1px solid var(--border);border-radius:12px;box-shadow:var(--shadow-lg);max-height:min(460px,70vh);overflow:auto;padding:6px}
+.sr{display:flex;align-items:center;gap:10px;padding:8px 10px;border-radius:8px;cursor:pointer}
+.sr.active,.sr:hover{background:var(--surface-3)}
+.sr .pn{font-weight:600}
+.sr-empty{padding:16px;text-align:center;color:var(--text-3)}
+.top-actions{margin-left:auto;display:flex;align-items:center;gap:8px}
+
+.sidebar{background:var(--surface);border-right:1px solid var(--border);display:flex;flex-direction:column;min-height:0}
+main{overflow:auto;padding:28px 36px 80px;min-width:0}
+.main-inner{max-width:1180px;margin:0 auto;container-type:inline-size}
+
+@media (min-width:901px){
+  .app.side-collapsed{grid-template-columns:minmax(0,1fr)}
+  .app.side-collapsed .sidebar{display:none}
+}
+.v3d.no-tree .v3d-tree{display:none}
+
+/* ---------- controls ---------- */
+.btn{display:inline-flex;align-items:center;gap:7px;height:34px;padding:0 13px;border-radius:9px;border:1px solid var(--border);background:var(--surface);cursor:pointer;font-weight:550;font-size:13.5px;white-space:nowrap;transition:background .12s,border-color .12s}
+.btn:hover{background:var(--surface-3)}
+.btn svg{width:16px;height:16px}
+.btn.primary{background:var(--accent);border-color:var(--accent);color:#fff}
+.btn.primary:hover{filter:brightness(1.07)}
+.btn.danger{background:var(--danger);border-color:var(--danger);color:#fff}
+.btn.ghost{background:transparent;border-color:transparent}
+.btn.ghost:hover{background:var(--surface-3)}
+.btn.sm{height:30px;padding:0 10px;font-size:12.5px}
+.icon-btn{display:inline-grid;place-items:center;width:34px;height:34px;border-radius:9px;border:1px solid transparent;background:transparent;cursor:pointer;color:var(--text-2)}
+.icon-btn:hover{background:var(--surface-3);color:var(--text)}
+.icon-btn.sm{width:26px;height:26px;border-radius:7px}
+.icon-btn.sm svg{width:15px;height:15px}
+.icon-btn.danger:hover{background:var(--danger-soft);color:var(--danger)}
+.copy{opacity:.0;transition:opacity .12s}
+*:hover>.copy,.copy:focus-visible{opacity:1}
+@media (hover:none){.copy{opacity:.7}}
+
+.switch{display:inline-flex;align-items:center;gap:8px;cursor:pointer;font-size:13px;font-weight:550;color:var(--text-2);user-select:none;padding:0 6px}
+.switch input{position:absolute;opacity:0;pointer-events:none}
+.switch .track{width:34px;height:20px;border-radius:20px;background:var(--border-strong);position:relative;transition:background .15s}
+.switch .track::after{content:"";position:absolute;left:2px;top:2px;width:16px;height:16px;border-radius:50%;background:#fff;box-shadow:0 1px 2px rgba(0,0,0,.25);transition:transform .15s}
+.switch input:checked+.track{background:var(--accent)}
+.switch input:checked+.track::after{transform:translateX(14px)}
+.switch input:focus-visible+.track{outline:2px solid var(--accent);outline-offset:2px}
+
+.menu-wrap{position:relative}
+.menu{position:absolute;right:0;top:40px;min-width:250px;background:var(--surface);border:1px solid var(--border);border-radius:12px;box-shadow:var(--shadow-lg);padding:6px;z-index:30}
+.menu button{display:flex;width:100%;align-items:center;gap:10px;padding:8px 10px;border:0;background:none;border-radius:8px;cursor:pointer;text-align:left}
+.menu button:hover{background:var(--surface-3)}
+.menu button span{display:flex;flex-direction:column;line-height:1.3}
+.menu button small{color:var(--text-3);font-size:11.5px}
+.menu hr{border:0;border-top:1px solid var(--border);margin:6px 4px}
+.menu .danger-item{color:var(--danger)}
+
+/* ---------- tags & chips ---------- */
+.tag{display:inline-flex;align-items:center;gap:4px;font-size:10.5px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;padding:2px 7px;border-radius:5px;white-space:nowrap}
+.tag.peca{background:var(--part-soft);color:var(--part-text)}
+.tag.inserto{background:var(--insert-soft);color:var(--insert-text)}
+.tag.parafuso{background:var(--screw-soft);color:var(--screw-text)}
+.tag.conjunto{background:var(--surface-3);color:var(--text-2)}
+.chip{display:inline-flex;align-items:center;gap:5px;font-size:12px;font-weight:550;padding:2px 9px;border-radius:999px;border:1px solid var(--border);background:var(--surface-2);color:var(--text-2);white-space:nowrap}
+.chip.thread{font-family:var(--mono);font-size:11.5px;border-color:color-mix(in srgb,var(--insert) 35%,var(--border));background:var(--insert-soft);color:var(--insert-text)}
+.chip.head{font-size:11.5px;border-color:color-mix(in srgb,var(--screw) 30%,var(--border));background:var(--screw-soft);color:var(--screw-text)}
+.chip.head b{font-family:var(--mono);font-weight:700}
+.badge-pref{display:inline-flex;align-items:center;gap:4px;font-size:11px;font-weight:650;color:var(--insert-text);background:var(--insert-soft);padding:2px 8px;border-radius:999px}
+.badge-pref svg{width:12px;height:12px;fill:currentColor;stroke:none}
+.ico{width:34px;height:34px;border-radius:9px;display:grid;place-items:center;flex:none}
+.ico.peca{background:var(--part-soft);color:var(--part)}
+.ico.inserto{background:var(--insert-soft);color:var(--insert)}
+.ico.parafuso{background:var(--screw-soft);color:var(--screw)}
+.ico.conjunto{background:var(--surface-3);color:var(--text-2)}
+.ico.sm{width:24px;height:24px;border-radius:7px}
+.ico.sm svg{width:14px;height:14px}
+.ico.lg{width:52px;height:52px;border-radius:14px}
+.ico.lg svg{width:26px;height:26px;stroke-width:1.6}
+.pn-link{font-family:var(--mono);font-weight:650;border-bottom:1px solid transparent}
+.pn-link:hover{border-bottom-color:currentColor}
+.pn-link.peca{color:var(--part-text)}
+.pn-link.inserto{color:var(--insert-text)}
+.pn-link.parafuso{color:var(--screw-text)}
+.dot{width:8px;height:8px;border-radius:50%;background:var(--text-3);flex:none}
+.dot.ok{background:var(--ok)} .dot.warn{background:var(--warn)}
+
+/* ---------- sidebar ---------- */
+.tabs{display:grid;grid-template-columns:repeat(3,1fr);gap:4px;padding:12px 12px 8px}
+.tabs button{border:0;background:transparent;border-radius:8px;padding:7px 4px;font-size:12.5px;font-weight:600;color:var(--text-2);cursor:pointer;display:flex;align-items:center;justify-content:center;gap:5px}
+.tabs button:hover{background:var(--surface-3)}
+.tabs button.active{background:var(--surface-3);color:var(--text)}
+.tabs .count{font-size:11px;font-weight:600;color:var(--text-3);background:var(--surface);border:1px solid var(--border);border-radius:999px;padding:0 6px}
+.side-filter{position:relative;margin:0 12px 6px}
+.side-filter svg{position:absolute;left:9px;top:50%;transform:translateY(-50%);width:14px;height:14px;color:var(--text-3)}
+.side-filter input{width:100%;height:32px;border-radius:8px;border:1px solid var(--border);background:var(--surface-2);padding:0 10px 0 29px;font:inherit;font-size:13px;color:var(--text);outline:none}
+.side-filter input:focus{border-color:var(--accent)}
+.side-list{flex:1;overflow:auto;padding:4px 8px 12px}
+.side-group{margin-top:10px}
+.side-group-head{display:flex;align-items:center;gap:6px;padding:4px 8px;font-size:11px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:var(--text-3)}
+.side-group-head a:hover{color:var(--text)}
+.side-group-head .n{margin-left:auto;font-weight:600}
+.litem{display:flex;align-items:center;gap:8px;padding:6px 8px 6px 10px;border-radius:8px;position:relative}
+.litem:hover{background:var(--surface-3)}
+.litem.active{background:var(--accent-soft)}
+.litem.active::before{content:"";position:absolute;left:0;top:7px;bottom:7px;width:3px;border-radius:3px;background:var(--accent)}
+.litem .pn{font-size:13px;font-weight:600}
+.litem .meta{margin-left:auto;font-size:11.5px;color:var(--text-3);white-space:nowrap;display:flex;align-items:center;gap:5px}
+.side-empty{padding:24px 12px;text-align:center;color:var(--text-3);font-size:13px}
+.side-foot{border-top:1px solid var(--border);padding:10px 12px;display:flex;flex-direction:column;gap:8px}
+.side-foot .row{display:flex;gap:6px;flex-wrap:wrap}
+.status{display:flex;gap:9px;align-items:flex-start;font-size:12px;padding:8px 10px;border-radius:9px;background:var(--surface-2);border:1px solid var(--border);line-height:1.35;text-align:left;width:100%;cursor:default}
+.status .dot{margin-top:4px}
+.status b{display:block;font-weight:600;color:var(--text)}
+.status span{color:var(--text-3)}
+.status.local{background:var(--warn-soft);border-color:color-mix(in srgb,var(--warn) 30%,transparent);cursor:pointer}
+
+.side-tools{display:flex;gap:6px;align-items:center;margin:0 12px 6px}
+.side-tools .side-filter{flex:1;margin:0}
+.side-chips{display:flex;gap:6px;margin:0 12px 4px;flex-wrap:wrap}
+.side-chip{border:1px solid var(--border);background:var(--surface);border-radius:999px;padding:2px 10px;font-size:11.5px;font-weight:600;color:var(--text-2);cursor:pointer}
+.side-chip:hover{border-color:var(--accent)}
+.side-chip.on{background:var(--accent-soft);border-color:var(--accent);color:var(--accent-text)}
+.side-group-head .tw{border:0;background:none;padding:0;width:18px;height:18px;display:grid;place-items:center;cursor:pointer;color:var(--text-3);border-radius:5px}
+.side-group-head .tw:hover{background:var(--surface-3);color:var(--text)}
+.side-group-head .tw svg{width:13px;height:13px;transition:transform .12s}
+.side-group.open .tw svg{transform:rotate(90deg)}
+
+/* ---------- main content ---------- */
+.crumbs{display:flex;align-items:center;gap:6px;font-size:12.5px;color:var(--text-3);margin-bottom:18px;flex-wrap:wrap}
+.crumbs a:hover{color:var(--text)}
+.crumbs svg{width:13px;height:13px}
+.crumbs .cur{color:var(--text-2);font-family:var(--mono)}
+.hero{display:flex;gap:16px;align-items:flex-start;margin-bottom:22px}
+.hero-body{flex:1;min-width:0}
+.hero .kind{display:flex;gap:8px;align-items:center;flex-wrap:wrap}
+.hero h1{margin:6px 0 2px;font-size:30px;line-height:1.15;font-weight:700;display:flex;align-items:center;gap:6px;flex-wrap:wrap;word-break:break-all}
+.hero h1.pn{font-family:var(--mono);letter-spacing:-.01em}
+.hero p{margin:4px 0 0;color:var(--text-2);max-width:760px}
+.hero-actions{display:flex;gap:6px;flex-wrap:wrap}
+.stats{display:grid;grid-template-columns:repeat(auto-fit,minmax(170px,1fr));gap:12px;margin-bottom:26px}
+.stat{background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:14px 16px;box-shadow:var(--shadow);display:flex;gap:12px;align-items:center}
+.stat b{display:block;font-size:22px;line-height:1.1;font-weight:700}
+.stat span{font-size:12.5px;color:var(--text-2)}
+.stat.warn b{color:var(--warn)}
+.section{margin-top:30px}
+.section-head{display:flex;align-items:center;gap:10px;margin-bottom:12px;flex-wrap:wrap}
+.section-head h2{margin:0;font-size:16px;font-weight:650}
+.section-head .muted{font-size:13px}
+.section-head .right{margin-left:auto;display:flex;gap:6px}
+.card{background:var(--surface);border:1px solid var(--border);border-radius:12px;box-shadow:var(--shadow)}
+.empty{border:1.5px dashed var(--border-strong);border-radius:12px;padding:30px 20px;text-align:center;color:var(--text-2);background:var(--surface)}
+.empty svg{width:28px;height:28px;color:var(--text-3);margin-bottom:6px}
+.empty b{display:block;color:var(--text);font-size:14.5px;margin-bottom:2px}
+.empty .btn{margin-top:12px}
+
+/* tree (organograma): conjunto -> peças -> INSERTO (rosca) -> insertos -> parafusos */
+.tree-card{background:var(--surface);border:1px solid var(--border);border-radius:14px;box-shadow:var(--shadow);margin-bottom:22px;width:max-content;min-width:100%}
+.tree-bar{display:flex;align-items:center;gap:10px;padding:10px 14px;border-bottom:1px solid var(--border);flex-wrap:wrap;position:sticky;left:0;width:100cqw;max-width:100%}
+.tree-bar>svg{color:var(--text-3)}
+.tree-bar b{font-size:14.5px}
+.tree-bar .right{margin-left:auto;display:flex;gap:6px;align-items:center;flex-wrap:wrap}
+.tree-hint{display:flex;gap:8px;align-items:center;margin:12px 14px 0;padding:8px 12px;border-radius:9px;background:var(--surface-2);color:var(--text-2);font-size:12.5px}
+.tree-hint svg{width:15px;height:15px;color:var(--text-3)}
+.tree-scroll{padding:22px 12px 30px;border-radius:14px;background-image:radial-gradient(var(--border) 1px,transparent 1px);background-size:18px 18px}
+.tree{width:max-content;min-width:100%}
+.tree ul{display:flex;justify-content:center;margin:0;padding:24px 0 0;position:relative}
+.tree>ul{padding-top:0}
+.tree li{list-style:none;display:flex;flex-direction:column;align-items:center;position:relative;padding:24px 7px 0}
+.tree>ul>li{padding-top:0}
+.tree li::before,.tree li::after{content:"";position:absolute;top:0;right:50%;width:50%;height:24px;border-top:2px solid var(--line)}
+.tree li::after{right:auto;left:50%;border-left:2px solid var(--line)}
+.tree li:first-child::before,.tree li:last-child::after{border:0 none}
+.tree li:last-child::before{border-right:2px solid var(--line);border-radius:0 10px 0 0}
+.tree li:first-child::after{border-radius:10px 0 0 0}
+.tree li:only-child::before{display:none}
+.tree li:only-child::after{border-top:0;border-radius:0}
+.tree>ul>li::before,.tree>ul>li::after{display:none}
+.tree ul ul::before{content:"";position:absolute;top:0;left:50%;height:24px;border-left:2px solid var(--line)}
+.node{position:relative;display:flex;flex-direction:column;align-items:center;gap:2px;min-width:150px;max-width:250px;padding:9px 16px 11px;border:1.5px solid var(--border-strong);border-radius:11px;background:var(--surface);box-shadow:var(--shadow);text-align:center;font:inherit;color:inherit;transition:border-color .12s,box-shadow .12s}
+.node[data-act]{cursor:pointer}
+.node[data-act]:hover{border-color:var(--accent)}
+.node:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+.node .nk{font-size:9.5px;font-weight:700;letter-spacing:.09em;text-transform:uppercase;color:var(--text-3)}
+.node .pn-link{font-size:14px}
+.node .ns{font-size:11.5px;color:var(--text-3);line-height:1.35}
+.node .ns.warn{color:var(--warn);font-weight:600}
+.node .ns svg{width:12px;height:12px;vertical-align:-2px;margin-right:3px}
+.node .chip{margin-top:3px}
+.node .nacts{display:flex;gap:2px;margin-top:4px}
+.node .caret{position:absolute;bottom:-10px;left:50%;transform:translateX(-50%);width:20px;height:20px;border-radius:50%;background:var(--surface);border:1.5px solid var(--border-strong);display:grid;place-items:center;font:700 13px/1 var(--mono);color:var(--text-2);z-index:1}
+.node.part.open{border:2px solid var(--accent);box-shadow:0 0 0 4px var(--accent-soft),var(--shadow)}
+.node.part.open .caret{border-color:var(--accent);color:var(--accent-text)}
+.node.thread{background:var(--insert-soft);border-color:color-mix(in srgb,var(--insert) 45%,var(--border));color:var(--insert-text);font-weight:750;letter-spacing:.03em;padding:10px 18px}
+.node.ins{border-color:color-mix(in srgb,var(--insert) 50%,var(--border))}
+.node.ins.open{border:2px solid var(--insert);box-shadow:0 0 0 4px color-mix(in srgb,var(--insert) 15%,transparent),var(--shadow)}
+.node.ins.open .caret{border-color:var(--insert);color:var(--insert-text)}
+.node.scr{border-color:color-mix(in srgb,var(--screw) 45%,var(--border))}
+.node.root{border:0;box-shadow:none;background:none;padding:2px 12px 8px;max-width:none}
+.node.root .root-t{font-size:24px;font-weight:800;letter-spacing:.02em;text-transform:uppercase;line-height:1.15}
+.node.root a.root-t:hover{color:var(--accent-text)}
+.node.empty{border-style:dashed;box-shadow:none;background:var(--surface-2);color:var(--text-3);font-size:12px;font-style:italic;min-width:130px}
+.node.ghost{border-style:dashed;box-shadow:none;background:var(--surface);color:var(--accent-text);font-weight:650;font-size:12.5px;flex-direction:row;justify-content:center;gap:5px;min-width:110px;cursor:pointer;border-color:color-mix(in srgb,var(--accent) 45%,var(--border))}
+.node.ghost:hover{background:var(--accent-soft)}
+.node.ghost svg{width:15px;height:15px}
+.node-go{position:absolute;top:4px;right:4px;width:24px;height:24px;border-radius:7px;display:grid;place-items:center;color:var(--text-3);opacity:0;transition:opacity .12s}
+.node-go svg{width:14px;height:14px}
+.node:hover .node-go,.node-go:focus-visible{opacity:1}
+.node-go:hover{background:var(--surface-3);color:var(--accent-text)}
+@media (hover:none){.node-go{opacity:.8}}
+.node .pref{position:absolute;top:-10px;left:-10px;width:22px;height:22px;border-radius:50%;background:var(--insert);color:#fff;display:grid;place-items:center;box-shadow:var(--shadow)}
+.node .pref svg{width:12px;height:12px;fill:currentColor;stroke:none}
+
+/* commodities (início) */
+.home-head{display:flex;align-items:flex-end;gap:16px;flex-wrap:wrap;margin-bottom:22px}
+.home-head h1{margin:0;font-size:30px;font-weight:750;line-height:1.15;text-wrap:balance}
+.home-head p{margin:6px 0 0;color:var(--text-2);max-width:640px}
+.home-head .hero-actions{margin-left:auto}
+.cgrid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:18px;margin-bottom:34px}
+@media (max-width:1180px){.cgrid{grid-template-columns:repeat(2,minmax(0,1fr))}}
+@media (max-width:560px){.cgrid{grid-template-columns:minmax(0,1fr)}}
+.ccard-wrap{position:relative;min-width:0}
+.ccard{display:flex;flex-direction:column;height:100%;width:100%;background:var(--surface);border:1px solid var(--border);border-radius:16px;overflow:hidden;box-shadow:var(--shadow);transition:transform .15s,box-shadow .15s,border-color .15s}
+.ccard:hover{transform:translateY(-2px);box-shadow:var(--shadow-lg);border-color:var(--accent)}
+.ccard:focus-visible{outline:2px solid var(--accent);outline-offset:3px}
+.ccard-art{aspect-ratio:16/9;max-width:100%;display:grid;place-items:center;background-color:var(--surface-2);background-image:radial-gradient(var(--border) 1px,transparent 1px);background-size:16px 16px;border-bottom:1px solid var(--border);overflow:hidden}
+.ccard-art svg.art{width:76%;height:auto;max-height:86%}
+.ccard-art img{width:100%;height:100%;object-fit:cover}
+.ccard-body{padding:14px 18px 16px;display:flex;flex-direction:column;gap:2px}
+.ccard-title{font-size:17px;font-weight:800;letter-spacing:.07em;text-transform:uppercase}
+.ccard-sub{font-size:12.5px;color:var(--text-3)}
+.ccard-meta{margin-top:6px;font-size:12.5px;color:var(--text-2);display:flex;gap:6px;align-items:center;flex-wrap:wrap}
+.ccard-meta .warn{color:var(--warn);font-weight:600}
+.ccard-acts{position:absolute;top:10px;right:10px;display:flex;gap:2px;background:var(--surface);border:1px solid var(--border);border-radius:9px;padding:2px;box-shadow:var(--shadow)}
+.ccard.ghost{font:inherit;font-weight:650;border:1.5px dashed color-mix(in srgb,var(--accent) 45%,var(--border));background:transparent;box-shadow:none;align-items:center;justify-content:center;flex-direction:row;min-height:220px;color:var(--accent-text);gap:8px;cursor:pointer}
+.ccard.ghost:hover{background:var(--accent-soft)}
+.hero-art{width:140px;max-width:40%;aspect-ratio:16/10;border-radius:14px;background:var(--surface-2);border:1px solid var(--border);display:grid;place-items:center;overflow:hidden;flex:none}
+.hero-art svg.art{width:86%;height:auto}
+.hero-art img{width:100%;height:100%;object-fit:cover}
+svg.art{fill:none;stroke:none}
+svg.art .ln{fill:none;stroke:var(--text-2);stroke-width:2.2;stroke-linecap:round;stroke-linejoin:round}
+svg.art .lt{fill:none;stroke:var(--text-3);stroke-width:1.5;stroke-linecap:round;stroke-linejoin:round}
+svg.art .fl{fill:var(--surface);stroke:var(--text-2);stroke-width:2.2;stroke-linejoin:round}
+svg.art .ac{fill:var(--accent-soft);stroke:var(--accent);stroke-width:1.6;stroke-linejoin:round}
+svg.art .as{fill:none;stroke:var(--accent);stroke-width:2.2;stroke-linecap:round;stroke-linejoin:round}
+.imgpick{border:1.5px dashed var(--border-strong);border-radius:10px;min-height:110px;display:grid;place-items:center;cursor:pointer;color:var(--text-3);font-size:12.5px;text-align:center;padding:10px;overflow:hidden;background:var(--surface-2)}
+.imgpick:hover,.imgpick:focus-visible{border-color:var(--accent);outline:none}
+.imgpick img{max-width:100%;max-height:180px;border-radius:6px}
+.imgpick span{display:flex;flex-direction:column;align-items:center;gap:6px}
+.linkbtn{border:0;background:none;padding:0;color:var(--accent-text);cursor:pointer;font:inherit;text-decoration:underline}
+
+/* 3D viewer */
+.v3d{position:relative;height:500px;overflow:hidden;background-color:var(--surface-2);background-image:radial-gradient(var(--border) 1px,transparent 1px);background-size:18px 18px}
+.v3d.has-model{display:flex}
+.v3d-tree{width:280px;flex:none;overflow:auto;border-right:1px solid var(--border);background:var(--surface);padding:8px;font-size:12.5px}
+.v3d-tree .label{padding:2px 6px 6px}
+.vt-row{display:flex;gap:6px;align-items:center;width:100%;border:0;background:none;text-align:left;padding:4px 6px;border-radius:6px;cursor:pointer;font:inherit;color:var(--text-2)}
+.vt-row:hover{background:var(--surface-3)}
+.vt-row.active{background:var(--accent-soft);color:var(--accent-text);font-weight:650}
+.vt-row svg{width:14px;height:14px;opacity:.7}
+.vt-row span{min-width:0;overflow-wrap:anywhere;font-family:var(--mono)}
+.v3d-stage{position:relative;flex:1;min-width:0}
+.v3d-sel{position:absolute;left:12px;top:10px;max-width:calc(100% - 24px);font-size:12.5px;padding:4px 10px;border-radius:999px;background:var(--surface);border:1px solid var(--border);color:var(--text-2);pointer-events:none;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.v3d-sel.on{background:var(--accent);border-color:var(--accent);color:#fff;font-weight:650;font-family:var(--mono)}
+@media (max-width:900px){.v3d.has-model{flex-direction:column}.v3d-tree{width:auto;max-height:120px;border-right:0;border-bottom:1px solid var(--border)}}
+.v3d canvas{width:100%;height:100%;display:block;touch-action:none;cursor:grab}
+.v3d canvas:active{cursor:grabbing}
+.v3d-drop{position:absolute;inset:10px;display:grid;place-items:center;text-align:center;color:var(--text-2);cursor:pointer;border:2px dashed var(--border-strong);border-radius:12px;padding:20px}
+.v3d-drop:hover,.v3d.over .v3d-drop,.v3d-drop:focus-visible{border-color:var(--accent);background:var(--accent-soft);outline:none}
+.v3d-drop b{display:block;color:var(--text);font-size:15px;margin-bottom:4px}
+.v3d-info{position:absolute;right:12px;top:14px;font-size:12px;color:var(--text-3);pointer-events:none}
+.v3d-help{position:absolute;left:12px;right:12px;bottom:10px;text-align:right;font-size:12px;color:var(--text-3);pointer-events:none}
+@media (max-width:900px){.v3d{height:360px}.v3d-help{display:none}}
+
+/* PN selector + ficha técnica */
+.pnsel{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:12px}
+.pnopt{display:flex;flex-direction:column;align-items:flex-start;gap:3px;padding:9px 14px;border:1.5px solid var(--border-strong);border-radius:10px;background:var(--surface);cursor:pointer;font:inherit;color:inherit;text-align:left;min-width:160px;box-shadow:var(--shadow);transition:border-color .12s,box-shadow .12s}
+.pnopt:hover{border-color:var(--accent)}
+.pnopt.active{border-color:var(--accent);box-shadow:0 0 0 3px var(--accent-soft)}
+.pnopt .pn{font-weight:700;font-size:13.5px}
+.pnopt small{font:600 10px/1.3 var(--mono);color:var(--text-3);text-transform:uppercase;letter-spacing:.08em}
+.pnsel.big .pnopt{min-width:220px;padding:14px 16px}
+.pnsel.big .pnopt .pn{font-size:16px}
+.pick-hint{display:flex;align-items:center;gap:8px;margin-bottom:10px;font-size:13px;color:var(--text-2)}
+.ficha{border-top:3px solid var(--accent);padding:14px 16px;font-size:12.5px}
+.ficha-card{padding:0;overflow:hidden}
+
+.ficha-h{display:flex;align-items:center;gap:4px;font:700 10px/1 var(--mono);letter-spacing:.16em;text-transform:uppercase;color:var(--text-3);margin-bottom:9px;min-height:22px}
+.ficha-h span{flex:1}
+.ficha dl{display:flex;flex-wrap:wrap;gap:12px 34px;margin:0}
+.ficha dl>div{display:flex;flex-direction:column;gap:3px;min-width:96px;max-width:100%}
+.ficha dt{font:600 9.5px/1.7 var(--mono);letter-spacing:.12em;text-transform:uppercase;color:var(--text-3)}
+.ficha dd{margin:0;min-width:0;overflow-wrap:anywhere;display:flex;gap:4px;flex-wrap:wrap;align-items:center}
+.ficha dd.big{font-family:var(--mono);font-weight:700;font-size:15px;letter-spacing:.01em}
+.chip.kind{font-family:var(--mono);font-size:10.5px;font-weight:700;letter-spacing:.09em;text-transform:uppercase;border-color:color-mix(in srgb,var(--accent) 35%,var(--border));background:var(--accent-soft);color:var(--accent-text)}
+.checks{display:flex;gap:6px 14px;flex-wrap:wrap}
+.checks label{display:flex;align-items:center;gap:6px;font-size:13px;cursor:pointer}
+.checks input{width:15px;height:15px;accent-color:var(--accent)}
+
+/* MBD captures */
+.caps{display:grid;grid-template-columns:repeat(auto-fill,minmax(min(100%,220px),1fr));gap:14px}
+.cap{position:relative;background:var(--surface);border:1px solid var(--border);border-radius:12px;overflow:hidden;box-shadow:var(--shadow);min-width:0}
+.cap button.cap-img{display:block;width:100%;aspect-ratio:4/3;border:0;padding:0;background:var(--surface-2);cursor:zoom-in}
+.cap button.cap-img:focus-visible{outline:2px solid var(--accent);outline-offset:-2px}
+.cap img{width:100%;height:100%;object-fit:contain;display:block}
+.cap-name{padding:8px 12px;font-size:13px;font-weight:600;display:flex;align-items:center;gap:6px;border-top:1px solid var(--border)}
+.cap-name span{flex:1;min-width:0;overflow-wrap:anywhere}
+.cap.ghost{border:1.5px dashed color-mix(in srgb,var(--accent) 45%,var(--border));background:transparent;box-shadow:none;display:grid;place-items:center;min-height:150px;color:var(--accent-text);font:inherit;font-weight:650;cursor:pointer;text-align:center;padding:12px}
+.cap.ghost:hover{background:var(--accent-soft)}
+.cap.ghost small{display:block;font-weight:400;color:var(--text-3);margin-top:4px}
+#lightbox{width:min(1500px,calc(100vw - 24px));height:calc(100vh - 24px);max-height:none;background:var(--surface);overflow:hidden}
+#lightbox[open]{display:flex;flex-direction:column}
+.lb-bar{display:flex;align-items:center;gap:10px;padding:10px 14px;border-bottom:1px solid var(--border)}
+.lb-bar b{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.lb-body{flex:1;overflow:auto;display:grid;place-items:center;background:var(--surface-2);min-height:0}
+.lb-body img{max-width:100%;max-height:100%;cursor:zoom-in}
+.lb-body.zoom{display:block}
+.lb-body.zoom img{max-width:none;max-height:none;cursor:zoom-out}
+
+/* tables */
+.tbl-wrap{overflow:auto;border-radius:12px}
+table.tbl{width:100%;border-collapse:collapse;font-size:13px}
+.tbl th{text-align:left;font-size:11px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:var(--text-3);padding:10px 14px;background:var(--surface-2);border-bottom:1px solid var(--border);white-space:nowrap}
+.tbl td{padding:9px 14px;border-bottom:1px solid var(--border);vertical-align:middle}
+.tbl tr:last-child td{border-bottom:0}
+.tbl tbody tr:hover td{background:var(--surface-2)}
+.tbl td.mono{font-family:var(--mono)}
+
+/* lists of rows (where used) */
+.rows{list-style:none;margin:0;padding:0}
+.rows li{display:flex;align-items:center;gap:12px;padding:11px 16px;border-top:1px solid var(--border);flex-wrap:wrap}
+.rows li:first-child{border-top:0}
+.rows .sub{font-size:12.5px;color:var(--text-3)}
+.rows .end{margin-left:auto;display:flex;gap:6px;align-items:center;flex-wrap:wrap}
+
+/* ---------- edit mode ---------- */
+body:not(.editing) .edit-only{display:none!important}
+body.editing .view-only{display:none!important}
+body.editing .copy{display:none}
+.edit-banner{margin:-28px -36px 20px;padding:8px 36px;background:var(--accent-soft);color:var(--accent-text);font-size:12.5px;font-weight:600;display:none;align-items:center;gap:8px;border-bottom:1px solid color-mix(in srgb,var(--accent) 25%,transparent)}
+body.editing .edit-banner{display:flex}
+
+/* ---------- dialog ---------- */
+dialog{border:0;padding:0;border-radius:16px;background:var(--surface);color:var(--text);box-shadow:var(--shadow-lg);width:min(520px,calc(100vw - 32px));max-height:calc(100vh - 48px)}
+dialog::backdrop{background:rgba(15,20,30,.45);backdrop-filter:blur(2px)}
+.form-head{padding:20px 22px 4px}
+.form-head h3{margin:0;font-size:17px}
+.form-head p{margin:4px 0 0}
+.form-body{padding:12px 22px 4px;display:flex;flex-wrap:wrap;gap:12px 14px}
+.field{display:flex;flex-direction:column;gap:5px;width:100%}
+.field.half{width:calc(50% - 7px)}
+.field-label{font-size:12.5px;font-weight:600;color:var(--text-2)}
+.field-label i{color:var(--danger);font-style:normal}
+.field input,.field select,.field textarea{width:100%;border:1px solid var(--border-strong);background:var(--surface);color:var(--text);border-radius:9px;padding:8px 11px;font:inherit;outline:none}
+.field textarea{resize:vertical;min-height:64px}
+.field input.mono{font-family:var(--mono);text-transform:uppercase}
+.field input:focus,.field select:focus,.field textarea:focus{border-color:var(--accent);box-shadow:0 0 0 3px var(--accent-soft)}
+.field input:disabled,.field select:disabled,.field textarea:disabled,.field input[readonly]{background:var(--surface-3);color:var(--text-2)}
+.field-hint{font-size:12px;color:var(--text-3);min-height:0}
+.field-hint:empty{display:none}
+.field-hint.warn{color:var(--warn)}
+.check{display:flex;align-items:center;gap:9px;font-size:13.5px;cursor:pointer;width:100%}
+.check input{width:16px;height:16px;accent-color:var(--accent)}
+.form-info{font-size:13.5px;color:var(--text-2);width:100%}
+.form-info ul{margin:8px 0 0;padding-left:18px}
+.form-error{margin:8px 22px 0;padding:8px 12px;border-radius:8px;background:var(--danger-soft);color:var(--danger);font-size:13px}
+.form-actions{display:flex;justify-content:flex-end;gap:8px;padding:16px 22px 20px}
+
+.toast{position:fixed;left:50%;bottom:24px;transform:translateX(-50%);background:#101828;color:#fff;padding:10px 16px;border-radius:10px;font-size:13.5px;box-shadow:var(--shadow-lg);z-index:100;display:flex;gap:8px;align-items:center;max-width:calc(100vw - 32px)}
+.toast svg{width:16px;height:16px;color:#4ade80}
+
+.only-mobile{display:none}
+@media (max-width:900px){
+  .app{grid-template-columns:minmax(0,1fr)}
+  .sidebar{position:fixed;left:0;top:58px;bottom:0;width:min(320px,86vw);z-index:15;transform:translateX(-100%);transition:transform .2s;box-shadow:var(--shadow-lg)}
+  .app.side-open .sidebar{transform:none}
+  .only-mobile{display:inline-grid}
+  main{padding:20px 16px 64px}
+  .edit-banner{margin:-20px -16px 16px;padding:8px 16px}
+  .brand{display:none}
+  .top-actions{gap:2px}
+  .stats{grid-template-columns:repeat(3,minmax(0,1fr));gap:8px}
+  .stat{flex-direction:column;align-items:flex-start;gap:4px;padding:10px 12px}
+  .stat .ico{display:none}
+  .stat b{font-size:19px}
+  .stat span{font-size:11.5px;line-height:1.25}
+  .search{margin-left:0}
+  .switch .lbl,.btn .lbl{display:none}
+  .hero h1{font-size:24px}
+  .field.half{width:100%}
+}
+
+@media print{
+  .topbar,.sidebar,.edit-only,.copy,.hero-actions,.section-head .right,.edit-banner{display:none!important}
+  .app{display:block;height:auto}
+  main{overflow:visible;padding:0}
+  body{background:#fff}
+  .tree-card,.card,.stat,.node{box-shadow:none;break-inside:avoid}
+}
+</style>
+</head>
+<body>
+<div class="app" id="app">
+  <header class="topbar">
+    <button class="icon-btn" data-act="toggle-sidebar" title="Mostrar ou recolher a barra lateral" aria-label="Mostrar ou recolher a barra lateral"><svg viewBox="0 0 24 24"><path d="M4 6h16M4 12h16M4 18h16"/></svg></button>
+    <a class="brand" href="#/" title="Início">
+      <span class="brand-mark"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="8"/><circle cx="12" cy="12" r="3.2"/></svg></span>
+      <span>Biblioteca de PNs<small>Insertos &amp; parafusos por peça</small></span>
+    </a>
+    <div class="search">
+      <svg viewBox="0 0 24 24"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg>
+      <input id="q" type="search" placeholder="Buscar peça, inserto ou parafuso…" autocomplete="off" spellcheck="false" aria-label="Buscar">
+      <kbd>/</kbd>
+      <div class="search-results" id="qres" hidden></div>
+    </div>
+    <div class="top-actions">
+      <label class="switch" title="Ativar modo de edição (pede senha)"><input type="checkbox" id="editToggle"><span class="track"></span><span class="lbl">Modo edição</span></label>
+      <div class="menu-wrap">
+        <button class="btn" data-act="toggle-menu" aria-haspopup="true"><svg viewBox="0 0 24 24"><ellipse cx="12" cy="6" rx="8" ry="3"/><path d="M4 6v6c0 1.7 3.6 3 8 3s8-1.3 8-3V6M4 12v6c0 1.7 3.6 3 8 3s8-1.3 8-3v-6"/></svg><span class="lbl">Dados</span></button>
+        <div class="menu" id="dataMenu" hidden>
+          <button data-act="connect-base"><svg viewBox="0 0 24 24"><path d="M3 7a2 2 0 0 1 2-2h4l2 2h8a2 2 0 0 1 2 2v8a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><path d="M12 11v5m-2.5-2.5L12 16l2.5-2.5"/></svg><span>Conectar pasta da base<small>Grava as alterações e os 3D direto na pasta deste arquivo</small></span></button>
+          <button data-act="export-html"><svg viewBox="0 0 24 24"><path d="M12 4v11m-5-5 5 5 5-5M5 20h14"/></svg><span>Salvar como HTML<small>Arquivo único com os dados atuais — para compartilhar</small></span></button>
+          <button data-act="export-csv"><svg viewBox="0 0 24 24"><rect x="4" y="3" width="16" height="18" rx="2"/><path d="M4 9h16M4 15h16M10 3v18"/></svg><span>Exportar para Excel (CSV)<small>Uma linha por peça × inserto × parafuso</small></span></button>
+          <button data-act="export-json"><svg viewBox="0 0 24 24"><path d="M8 4H7a2 2 0 0 0-2 2v4l-2 2 2 2v4a2 2 0 0 0 2 2h1M16 4h1a2 2 0 0 1 2 2v4l2 2-2 2v4a2 2 0 0 1-2 2h-1"/></svg><span>Exportar JSON<small>Backup completo da biblioteca</small></span></button>
+          <hr>
+          <button data-act="import"><svg viewBox="0 0 24 24"><path d="M12 20V9m-5 5 5-5 5 5M5 4h14"/></svg><span>Importar CSV ou JSON<small>CSV mescla · JSON substitui tudo</small></span></button>
+          <button data-act="change-password" class="edit-only"><svg viewBox="0 0 24 24"><rect x="5" y="11" width="14" height="10" rx="2"/><path d="M8 11V8a4 4 0 0 1 8 0v3"/></svg><span>Trocar senha de edição<small>Vale para quem usar este arquivo</small></span></button>
+          <button data-act="restore-backup" id="restoreItem" hidden><svg viewBox="0 0 24 24"><path d="M3 12a9 9 0 1 0 3-6.7L3 8"/><path d="M3 3v5h5M12 8v4l3 2"/></svg><span>Recuperar edições antigas<small>Edições deste navegador feitas numa versão anterior do arquivo</small></span></button>
+          <hr>
+          <button data-act="reset" class="danger-item"><svg viewBox="0 0 24 24"><path d="M3 12a9 9 0 1 0 3-6.7L3 8"/><path d="M3 3v5h5"/></svg><span>Descartar alterações locais<small>Volta aos dados gravados neste arquivo</small></span></button>
+        </div>
+      </div>
+      <button class="icon-btn" data-act="toggle-theme" title="Tema claro/escuro" aria-label="Alternar tema"><svg viewBox="0 0 24 24"><path d="M20 14.5A8 8 0 1 1 9.5 4a6.5 6.5 0 0 0 10.5 10.5z"/></svg></button>
+    </div>
+  </header>
+  <aside class="sidebar" id="sidebar"></aside>
+  <main id="main"></main>
+</div>
+<dialog id="dlg"></dialog>
+<div id="toast" class="toast" role="status" hidden></div>
+<input type="file" id="fileInput" accept=".json,.csv,.txt" hidden>
+
+<!-- ===== DADOS DA BIBLIOTECA (editável pela interface; "Dados > Salvar como HTML" grava aqui) ===== -->
+<!-- Base na pasta: se existir base/dados.js ao lado deste arquivo, ele substitui os dados embutidos abaixo. -->
+<script src="base/dados.js"></script>
+<script id="seed-data" type="application/json">
+{
+ "version": 1,
+ "updatedAt": "2026-11-06T00:00:00.000Z",
+ "editLock": {"salt": "d74a0ee62f1f2bcd0b631d9b44a96d2d", "iterations": 200000, "hash": "f00f7fa94c6f86d6358d489bc012debcd182025b2dbbe6866420df31a081a829"},
+ "assemblies": [
+  {"id": "overhead-bin", "name": "Overhead Bin", "short": "OHBin", "art": "ohbin", "description": ""},
+  {"id": "galley", "name": "Galley", "art": "galley", "description": ""},
+  {"id": "lavatory", "name": "Lavatory", "art": "lavatory", "description": ""},
+  {"id": "windscreen", "name": "Windscreen", "art": "windscreen", "description": ""},
+  {"id": "wardrobe", "name": "Wardrobe", "art": "wardrobe", "description": ""}
+ ],
+ "parts": [
+  {"pn": "CDPA689", "kind": "extrudado", "description": "", "assembly": "overhead-bin", "notes": "",
+   "inserts": [
+    {"insert": "CDIN07-08-06", "preferred": false, "note": "", "screws": ["NAS514P832-3P", "NAS8302-3"]},
+    {"insert": "CDIN23-08S", "preferred": false, "note": "", "screws": []}
+   ]},
+  {"pn": "CDPA690", "description": "", "assembly": "overhead-bin", "notes": "", "inserts": []},
+  {"pn": "CDPA691", "description": "", "assembly": "overhead-bin", "notes": "", "inserts": []},
+  {"pn": "CDPA695", "description": "", "assembly": "overhead-bin", "notes": "", "inserts": []}
+ ],
+ "inserts": [
+  {"pn": "CDIN07-08-06", "thread": "8-32", "description": "", "notes": ""},
+  {"pn": "CDIN23-08S", "thread": "8-32", "description": "", "notes": ""}
+ ],
+ "screws": [
+  {"pn": "NAS514P832-3P", "head": "CSK", "thread": "8-32", "description": "", "notes": ""},
+  {"pn": "NAS8302-3", "head": "PAN", "thread": "8-32", "description": "", "notes": ""}
+ ]
+}
+</script>
+
+<script>
+(() => {
+'use strict';
+// Snapshot of the untouched page, used by "Salvar como HTML".
+const PRISTINE = '<!DOCTYPE html>\n' + document.documentElement.outerHTML;
+const KEY = 'biblioteca-pn:data:' + location.pathname;
+const THEME_KEY = 'biblioteca-pn:theme';
+const SIDE_KEY = 'biblioteca-pn:side';
+
+/* ---------------- helpers ---------------- */
+const $ = (s, r = document) => r.querySelector(s);
+const $$ = (s, r = document) => [...r.querySelectorAll(s)];
+const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const normPn = s => String(s || '').trim().toUpperCase().replace(/\s+/g, ' ');
+const fold = s => String(s || '').normalize('NFD').replace(/[̀-ͯ]/g, '').toLowerCase();
+const alnum = s => fold(s).replace(/[^a-z0-9]/g, '');
+const cmp = (a, b) => String(a).localeCompare(String(b), 'pt-BR', {numeric: true, sensitivity: 'base'});
+const lsGet = k => { try { return localStorage.getItem(k); } catch (_) { return null; } };
+const lsSet = (k, v) => { try { localStorage.setItem(k, v); return true; } catch (_) { return false; } };
+const lsDel = k => { try { localStorage.removeItem(k); } catch (_) {} };
+const plural = (n, s, p) => `${n} ${n === 1 ? s : (p || s + 's')}`;
+const today = () => new Date().toISOString().slice(0, 10);
+const fmtDate = iso => { const d = new Date(iso); return isNaN(d) ? '—' : d.toLocaleDateString('pt-BR', {day: '2-digit', month: 'short', year: 'numeric'}); };
+const slug = s => fold(s).replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '') || 'conjunto';
+const pushMap = (m, k, v) => { if (!m.has(k)) m.set(k, []); m.get(k).push(v); };
+
+const I = {
+  peca: '<svg viewBox="0 0 24 24"><rect x="3" y="5" width="18" height="14" rx="2.5"/><circle cx="7.5" cy="9.5" r="1.3"/><circle cx="16.5" cy="9.5" r="1.3"/><circle cx="7.5" cy="14.5" r="1.3"/><circle cx="16.5" cy="14.5" r="1.3"/></svg>',
+  inserto: '<svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="8.5"/><circle cx="12" cy="12" r="3.5"/><path d="M12 3.5v2M12 18.5v2M3.5 12h2M18.5 12h2"/></svg>',
+  parafuso: '<svg viewBox="0 0 24 24"><path d="M7 3.5h10l-1.6 4H8.6z"/><path d="M9.5 7.5V19l2.5 2 2.5-2V7.5"/><path d="m9.5 10.5 5 1.5M9.5 13.5l5 1.5M9.5 16.5l5 1.5"/></svg>',
+  conjunto: '<svg viewBox="0 0 24 24"><path d="M3 8 12 3l9 5-9 5z"/><path d="m3 13 9 5 9-5"/></svg>',
+  plus: '<svg viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></svg>',
+  edit: '<svg viewBox="0 0 24 24"><path d="M4 20h4L19 9l-4-4L4 16z"/><path d="m13.5 6.5 4 4"/></svg>',
+  trash: '<svg viewBox="0 0 24 24"><path d="M4 7h16M10 11v6M14 11v6M6 7l1 13h10l1-13M9 7V4h6v3"/></svg>',
+  copy: '<svg viewBox="0 0 24 24"><rect x="9" y="9" width="11" height="11" rx="2"/><path d="M5 15V6a2 2 0 0 1 2-2h8"/></svg>',
+  star: '<svg viewBox="0 0 24 24"><path d="m12 3 2.8 5.7 6.2.9-4.5 4.4 1.1 6.2L12 17.3l-5.6 2.9 1.1-6.2L3 9.6l6.2-.9z"/></svg>',
+  go: '<svg viewBox="0 0 24 24"><path d="M7 17 17 7M9 7h8v8"/></svg>',
+  cube: '<svg viewBox="0 0 24 24"><path d="M12 3 20 7.5v9L12 21l-8-4.5v-9z"/><path d="M4 7.5 12 12l8-4.5M12 12v9"/></svg>',
+  chev: '<svg viewBox="0 0 24 24"><path d="m9 6 6 6-6 6"/></svg>',
+  info: '<svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M12 11v5M12 8h.01"/></svg>',
+  image: '<svg viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="16" rx="2"/><circle cx="9" cy="10" r="2"/><path d="m4 18 5-5 4 4 3-3 4 4"/></svg>',
+  check: '<svg viewBox="0 0 24 24"><path d="m5 12 5 5 9-10"/></svg>',
+  search: '<svg viewBox="0 0 24 24"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg>',
+  alert: '<svg viewBox="0 0 24 24"><path d="M12 3 2 20h20z"/><path d="M12 10v4M12 17h.01"/></svg>',
+  table: '<svg viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="16" rx="2"/><path d="M3 10h18M9 10v10"/></svg>',
+};
+const KIND_LABEL = {peca: 'Peça', inserto: 'Inserto', parafuso: 'Parafuso', conjunto: 'Commodity'};
+/* Commodity drawings (line art in the page's colors). */
+const ART = {
+  ohbin: '<svg class="art" viewBox="0 0 240 140" aria-hidden="true"><path class="fl" d="M42 30H198L208 42H32Z"/><path class="lt" d="M50 36H190"/><path class="fl" d="M28 42H212V94Q212 108 198 108H42Q28 108 28 94Z"/><path class="lt" d="M28 84H212"/><path class="ac" d="M100 108l7-14h26l7 14z"/><path class="as" d="M111 101h18"/><path class="ln" d="M62 42v7M178 42v7"/><circle class="ln" cx="42" cy="56" r="2"/><circle class="ln" cx="198" cy="56" r="2"/></svg>',
+  galley: '<svg class="art" viewBox="0 0 240 140" aria-hidden="true"><path class="fl" d="M170 6V134H78V76C78 40 100 12 142 6Z"/><path class="ac" d="M146 66H85C88 42 106 21 138 13H146Z"/><rect class="fl" x="124" y="18" width="18" height="10" rx="2"/><path class="ln" d="M150 6V134"/><path class="fl" d="M78 68H150V76H78Z"/><path class="ln" d="M102 76V124M126 76V124M78 124H150"/><path class="as" d="M90 76v8M114 76v8M138 76v8"/><rect class="fl" x="83" y="88" width="13" height="11" rx="2"/><path class="lt" d="M84 108h11M84 113h11M84 118h11M102 102h24"/><circle class="ln" cx="138" cy="106" r="5"/><rect class="fl" x="156" y="28" width="8" height="10" rx="2"/><rect class="fl" x="156" y="76" width="8" height="10" rx="2"/><rect class="fl" x="156" y="116" width="8" height="10" rx="2"/></svg>',
+  lavatory: '<svg class="art" viewBox="0 0 240 140" aria-hidden="true"><rect class="fl" x="48" y="8" width="144" height="128" rx="6"/><rect class="ac" x="58" y="18" width="34" height="10" rx="3"/><rect class="ac" x="112" y="20" width="64" height="38" rx="4"/><path class="lt" d="M124 30l10-3M124 40l22-7"/><path class="ln" d="M104 76h80"/><path class="fl" d="M120 76c4 16 36 16 40 0z"/><path class="ln" d="M140 76v-10h9"/><rect class="fl" x="58" y="74" width="12" height="32" rx="4"/><path class="fl" d="M62 136l4-30h44c0 18-12 28-28 30z"/><circle class="fl" cx="174" cy="108" r="7"/></svg>',
+  windscreen: '<svg class="art" viewBox="0 0 240 140" aria-hidden="true"><path class="ln" d="M10 130h220"/><rect class="fl" x="18" y="22" width="58" height="106" rx="20"/><rect class="ac" x="34" y="40" width="26" height="24" rx="9"/><path class="ln" d="M66 84v14"/><path class="as" d="M82 74h12m-4-4 4 4-4 4M82 94h12m-4-4 4 4-4 4"/><path class="fl" d="M104 130V64q0-16 16-16h40v82z"/><path class="ac" d="M104 64q0-16 16-16h40v7h-40q-9 0-9 9v66h-7z"/><rect class="fl" x="172" y="98" width="38" height="10" rx="4"/><rect class="fl" x="204" y="54" width="12" height="54" rx="5"/><path class="ln" d="M180 108v22M202 108v22"/></svg>',
+  wardrobe: '<svg class="art" viewBox="0 0 240 140" aria-hidden="true"><rect class="fl" x="58" y="6" width="124" height="130" rx="5"/><rect class="ac" x="122" y="12" width="54" height="118" rx="2"/><path class="ln" d="M126 26h46M137 26v4M161 26v4"/><path class="fl" d="M129 36l8-6 8 6 3 52h-22z"/><path class="fl" d="M153 36l8-6 8 6 3 48h-22z"/><rect class="fl" x="64" y="12" width="54" height="118" rx="2"/><path class="ln" d="M110 62v16"/></svg>',
+  generic: '<svg class="art" viewBox="0 0 240 140" aria-hidden="true"><path class="fl" d="M120 14l52 26v58l-52 26-52-26V40z"/><path class="ac" d="M120 14l52 26-52 26-52-26z"/><path class="ln" d="M120 66v58"/></svg>',
+};
+const ART_LABEL = {ohbin: 'Overhead Bin', galley: 'Galley', lavatory: 'Lavatory', windscreen: 'Windscreen', wardrobe: 'Wardrobe', generic: 'Genérico'};
+const artGuess = name => /bin/i.test(name) ? 'ohbin' : /galley/i.test(name) ? 'galley' : /lav/i.test(name) ? 'lavatory'
+  : /wind\s*screen/i.test(name) ? 'windscreen' : /wardrobe|closet/i.test(name) ? 'wardrobe' : 'generic';
+const artKey = a => (a.art && ART[a.art]) ? a.art : artGuess(a.name || '');
+const asmArt = a => a.image ? `<img src="${esc(a.image)}" alt="">` : ART[artKey(a)];
+function shrinkImage(file, max = 720) {
+  return new Promise((resolve, reject) => {
+    const url = URL.createObjectURL(file), img = new Image();
+    img.onload = () => {
+      const k = Math.min(1, max / Math.max(img.width, img.height));
+      const c = document.createElement('canvas');
+      c.width = Math.round(img.width * k); c.height = Math.round(img.height * k);
+      c.getContext('2d').drawImage(img, 0, 0, c.width, c.height);
+      URL.revokeObjectURL(url);
+      let d = c.toDataURL('image/webp', 0.82);
+      if (!d.startsWith('data:image/webp')) d = c.toDataURL('image/jpeg', 0.85);
+      resolve(d);
+    };
+    img.onerror = () => { URL.revokeObjectURL(url); reject(new Error('Não consegui ler essa imagem.')); };
+    img.src = url;
+  });
+}
+
+const HEADS = {CSK: 'Escareada', PAN: 'Panela', HEX: 'Sextavada', FIL: 'Cilíndrica', SOC: 'Allen', TRU: 'Truss', WAF: 'Wafer'};
+const THREADS = ['2-56', '4-40', '6-32', '8-32', '10-24', '10-32', '1/4-20', '1/4-28', 'M3', 'M4', 'M5', 'M6'];
+
+/* ---------------- data ---------------- */
+const FROM_FOLDER = !!(window.BIBLIOTECA_DADOS && Array.isArray(window.BIBLIOTECA_DADOS.parts));
+let SEED = FROM_FOLDER ? window.BIBLIOTECA_DADOS : JSON.parse($('#seed-data').textContent);
+let db, idx, source = 'file', backedUp = false;
+let sideTab = 'pecas', sideFilter = '', editing = false, sidePend = false, sideKeys = [];
+const sideClosed = new Set((() => { try { return JSON.parse(localStorage.getItem('biblioteca-pn:side-groups') || '[]'); } catch (_) { return []; } })());
+const saveSideClosed = () => lsSet('biblioteca-pn:side-groups', JSON.stringify([...sideClosed]));
+
+function normalize(d) {
+  d = d && typeof d === 'object' ? d : {};
+  d.version = 1;
+  for (const k of ['assemblies', 'parts', 'inserts', 'screws']) if (!Array.isArray(d[k])) d[k] = [];
+  d.parts.forEach(p => {
+    if (!Array.isArray(p.inserts)) p.inserts = [];
+    p.inserts.forEach(e => { if (!Array.isArray(e.screws)) e.screws = []; });
+    if (!Array.isArray(p.assemblies)) p.assemblies = p.assembly ? [p.assembly] : [];   // dados antigos: uma commodity só
+  });
+  return d;
+}
+function loadDb() {
+  const raw = lsGet(KEY);
+  if (raw) {
+    try {
+      // Local edits are kept when they were made on top of this same file version
+      // (base) or are newer than it; a newer exported file replaces older local edits.
+      const st = JSON.parse(raw), local = st && st.data;
+      if (local && (st.base === SEED.updatedAt || (local.updatedAt || '') > (SEED.updatedAt || ''))) {
+        db = normalize(local);
+        source = local.updatedAt === SEED.updatedAt ? 'file' : 'local';
+        return;
+      }
+      // The file is newer than the edits saved in this browser: keep them aside so they can be recovered.
+      if (local && local.updatedAt !== st.base) { lsSet(KEY + ':backup', raw); backedUp = true; }
+      lsDel(KEY);
+    } catch (_) {}
+  }
+  db = normalize(JSON.parse(JSON.stringify(SEED)));
+  source = 'file';
+}
+function rebuild() {
+  idx = {asm: new Map(), part: new Map(), ins: new Map(), scr: new Map(), insUse: new Map(), scrUse: new Map(), asmParts: new Map()};
+  db.assemblies.forEach(a => idx.asm.set(a.id, a));
+  db.parts.forEach(p => { idx.part.set(p.pn, p); const ids = (p.assemblies || []).filter(id => idx.asm.has(id)); (ids.length ? ids : ['']).forEach(id => pushMap(idx.asmParts, id, p)); });
+  db.inserts.forEach(i => idx.ins.set(i.pn, i));
+  db.screws.forEach(s => idx.scr.set(s.pn, s));
+  for (const p of db.parts) for (const e of p.inserts) {
+    pushMap(idx.insUse, e.insert, {part: p, entry: e});
+    for (const s of e.screws) pushMap(idx.scrUse, s, {part: p, entry: e});
+  }
+}
+function commit(msg) {
+  db.updatedAt = new Date().toISOString();
+  if (lsSet(KEY, JSON.stringify({base: SEED.updatedAt, data: db}))) source = 'local';
+  else toast('Atenção: o navegador não conseguiu guardar (espaço cheio ou bloqueado). Use Dados › Salvar como HTML agora para não perder.', true);
+  rebuild(); render();
+  if (msg) toast(msg);
+  if (fs.ok) { clearTimeout(fs.timer); fs.timer = setTimeout(saveBase, 600); }
+}
+
+/* ---------------- routing ---------------- */
+const href = (kind, id) => `#/${kind}/${encodeURIComponent(id)}`;
+function route() {
+  const raw = location.hash.replace(/^#\/?/, '');
+  const i = raw.indexOf('/');
+  return i < 0 ? {kind: raw, id: ''} : {kind: raw.slice(0, i), id: decodeURIComponent(raw.slice(i + 1))};
+}
+function go(kind, id) {
+  const h = kind ? href(kind, id) : '#/';
+  if (location.hash === h) render(); else location.hash = h;
+}
+
+/* ---------------- small renderers ---------------- */
+const pnLink = (kind, pn) => `<a class="pn-link ${kind}" href="${href(kind, pn)}">${esc(pn)}</a>`;
+const copyBtn = t => `<button class="icon-btn sm copy" data-act="copy" data-text="${esc(t)}" title="Copiar ${esc(t)}" aria-label="Copiar">${I.copy}</button>`;
+const threadChip = t => t ? `<span class="chip thread">${esc(t)}</span>` : '';
+const headChip = h => h ? `<span class="chip head" title="Cabeça ${esc(HEADS[h] || h)}"><b>${esc(h)}</b>${HEADS[h] ? ' · ' + esc(HEADS[h]) : ''}</span>` : '';
+const tag = k => `<span class="tag ${k}">${KIND_LABEL[k]}</span>`;
+const ico = (k, cls = '') => `<span class="ico ${k} ${cls}">${I[k]}</span>`;
+const prefBadge = () => `<span class="badge-pref" title="Indicação preferencial (boa prática)">${I.star}Preferencial</span>`;
+const editBtn = (act, data, title = 'Editar') => `<button class="icon-btn sm edit-only" data-act="${act}" ${data} title="${title}" aria-label="${title}">${I.edit}</button>`;
+const delBtn = (act, data, title = 'Excluir') => `<button class="icon-btn sm danger edit-only" data-act="${act}" ${data} title="${title}" aria-label="${title}">${I.trash}</button>`;
+const dattr = o => Object.entries(o).map(([k, v]) => `data-${k}="${esc(v)}"`).join(' ');
+const asmName = id => idx.asm.get(id)?.name || 'Sem commodity';
+const partAsmIds = p => (p.assemblies || []).filter(id => idx.asm.has(id));
+const asmNames = p => partAsmIds(p).map(id => idx.asm.get(id).name).join(', ') || 'Sem commodity';
+const setAsms = (p, ids) => { p.assemblies = [...new Set(ids.filter(Boolean))]; p.assembly = p.assemblies[0] || ''; };
+
+function crumbs(items) {
+  return `<nav class="crumbs"><a href="#/">Início</a>${items.map(it => `${I.chev}${it.href ? `<a href="${it.href}">${esc(it.label)}</a>` : `<span class="cur">${esc(it.label)}</span>`}`).join('')}</nav>`;
+}
+function hero(kind, title, {desc, chips = '', actions = '', mono = true, icon = ''} = {}) {
+  return `<section class="hero">${icon || ico(kind, 'lg')}
+    <div class="hero-body">
+      <div class="kind">${tag(kind)}${chips}</div>
+      <h1 class="${mono ? 'pn' : ''}">${esc(title)}${mono ? copyBtn(title) : ''}</h1>
+      ${desc ? `<p>${esc(desc)}</p>` : ''}
+    </div>
+    <div class="hero-actions">${actions}</div></section>`;
+}
+function stat(icon, n, label, cls = '') {
+  return `<div class="stat ${cls}">${ico(icon)}<div><b>${n}</b><span>${esc(label)}</span></div></div>`;
+}
+function emptyBox(icon, title, text, btn = '') {
+  return `<div class="empty">${I[icon] || ''}<b>${esc(title)}</b><div>${text}</div>${btn}</div>`;
+}
+/* ---------------- tree (organograma) ---------------- */
+const openParts = new Set();   // peças expandidas nas árvores de conjunto
+const closedIns = new Set();   // insertos recolhidos ("PN|INSERTO")
+const goLink = (kind, pn) => `<a class="node-go" href="${href(kind, pn)}" title="Abrir detalhes de ${esc(pn)}" aria-label="Abrir detalhes">${I.go}</a>`;
+const treeWrap = lis => `<div class="tree-scroll"><div class="tree"><ul>${lis}</ul></div></div>`;
+const ghost = (act, data, label) => `<li><button class="node ghost" data-act="${act}" ${data}>${I.plus}${esc(label)}</button></li>`;
+function asmTree(id, withActions = true) {
+  const a = idx.asm.get(id);
+  const list = (idx.asmParts.get(id) || []).slice().sort((x, y) => cmp(x.pn, y.pn));
+  const name = a ? a.name : 'Sem commodity';
+  const root = `<div class="node root">${a ? `<a class="root-t" href="${href('conjunto', id)}">${esc(name)}</a>` : `<span class="root-t">${esc(name)}</span>`}</div>`;
+  let kids = list.map(p => partLi(p, false)).join('');
+  if (!list.length && !editing) kids += `<li><div class="node empty">Nenhuma peça</div></li>`;
+  if (editing) kids += ghost('new-part', dattr({asm: a ? a.name : ''}), 'Peça nova') + (a ? ghost('add-existing-part', dattr({asm: id}), 'Peça existente') : '');
+  return `<div class="tree-card">${treeWrap(`<li>${root}<ul>${kids}</ul></li>`)}</div>`;
+}
+function partLi(p, force) {
+  const open = force || openParts.has(p.pn);
+  const n = p.inserts.length;
+  const P = dattr({part: p.pn});
+  const node = `<div class="node part ${open ? 'open' : ''}" ${force ? '' : `data-act="tree-part" ${P} role="button" tabindex="0" aria-expanded="${open}"`}>
+    <span class="nk">Peça${KINDS[p.kind] ? ' · ' + KINDS[p.kind] : ''}</span>${force ? pnLink('peca', p.pn) : `<span class="pn-link peca">${esc(p.pn)}</span>${goLink('peca', p.pn)}`}
+    ${p.description ? `<span class="ns">${esc(p.description)}</span>` : ''}
+    <span class="ns ${n ? '' : 'warn'}">${n ? plural(n, 'inserto') : 'Sem inserto'}</span>
+    ${editing ? `<span class="nacts">${editBtn('edit-part', P, 'Editar peça')}${delBtn('delete-part', P, 'Excluir peça')}</span>` : ''}
+    ${force ? '' : `<span class="caret">${open ? '−' : '+'}</span>`}</div>`;
+  if (!open) return `<li>${node}</li>`;
+  const groups = new Map();
+  p.inserts.forEach(e => pushMap(groups, idx.ins.get(e.insert)?.thread || '—', e));
+  let kids = [...groups.keys()].sort(cmp).map(t =>
+    `<li><div class="node thread">INSERTO (${esc(t)})</div><ul>${groups.get(t).map(e => insLi(p, e)).join('')}</ul></li>`).join('');
+  if (!n && !editing) kids += `<li><div class="node empty">Nenhum inserto indicado</div></li>`;
+  if (editing) kids += ghost('add-entry', P, 'Inserto');
+  return `<li>${node}<ul>${kids}</ul></li>`;
+}
+function insLi(p, e) {
+  const key = p.pn + '|' + e.insert;
+  const open = !closedIns.has(key);
+  const ins = idx.ins.get(e.insert) || {};
+  const D = dattr({part: p.pn, ins: e.insert});
+  const node = `<div class="node ins ${open ? 'open' : ''}" data-act="tree-ins" ${dattr({key})} role="button" tabindex="0" aria-expanded="${open}">
+    ${e.preferred ? `<span class="pref" title="Preferencial (boa prática)">${I.star}</span>` : ''}
+    <span class="nk">Inserto${e.preferred ? ' · preferencial' : ''}</span><span class="pn-link inserto">${esc(e.insert)}</span>${goLink('inserto', e.insert)}
+    ${ins.description ? `<span class="ns">${esc(ins.description)}</span>` : ''}
+    ${e.note ? `<span class="ns">${I.info}${esc(e.note)}</span>` : ''}
+    ${editing ? `<span class="nacts">${editBtn('edit-entry', D, 'Editar indicação')}${delBtn('remove-entry', D, 'Remover inserto desta peça')}</span>` : ''}
+    <span class="caret">${open ? '−' : '+'}</span></div>`;
+  if (!open) return `<li>${node}</li>`;
+  let kids = e.screws.map(pn => {
+    const s = idx.scr.get(pn) || {};
+    return `<li><div class="node scr"><span class="nk">Parafuso</span>${pnLink('parafuso', pn)}${headChip(s.head)}
+      ${s.description ? `<span class="ns">${esc(s.description)}</span>` : ''}
+      ${editing ? `<span class="nacts">${delBtn('remove-entry-screw', dattr({part: p.pn, ins: e.insert, scr: pn}), 'Remover parafuso')}</span>` : ''}</div></li>`;
+  }).join('');
+  if (!e.screws.length && !editing) kids += `<li><div class="node empty">Sem parafuso indicado</div></li>`;
+  if (editing) kids += ghost('add-entry-screw', D, 'Parafuso');
+  return `<li>${node}<ul>${kids}</ul></li>`;
+}
+
+/* ---------------- views ---------------- */
+function commodityCard(a) {
+  const list = idx.asmParts.get(a.id) || [];
+  const pend = list.filter(p => !p.inserts.length).length;
+  const title = a.short || a.name;
+  return `<div class="ccard-wrap"><a class="ccard" href="${href('conjunto', a.id)}">
+      <div class="ccard-art">${asmArt(a)}</div>
+      <div class="ccard-body"><div class="ccard-title">${esc(title)}</div>${title !== a.name ? `<div class="ccard-sub">${esc(a.name)}</div>` : ''}
+        <div class="ccard-meta">${list.length ? plural(list.length, 'peça') : 'Nenhuma peça ainda'}${pend ? `<span class="faint">·</span><span class="warn">${pend} sem inserto</span>` : ''}</div></div>
+    </a>${editing ? `<div class="ccard-acts">${editBtn('edit-assembly', dattr({id: a.id}), 'Editar commodity')}${delBtn('delete-assembly', dattr({id: a.id}), 'Excluir commodity')}</div>` : ''}</div>`;
+}
+function viewHome() {
+  const parts = db.parts;
+  const noIns = parts.filter(p => !p.inserts.length);
+  const noScr = [];
+  parts.forEach(p => p.inserts.forEach(e => { if (!e.screws.length) noScr.push({p, e}); }));
+  let html = `<section class="home-head"><div><h1>Biblioteca de PNs</h1>
+      <p>Escolha a commodity para ver as peças e os insertos e parafusos indicados por boa prática.</p></div>
+      <div class="hero-actions"><button class="btn edit-only" data-act="new-assembly">${I.plus}Commodity</button><button class="btn primary edit-only" data-act="new-part">${I.plus}Nova peça</button></div></section>
+    <div class="cgrid">${db.assemblies.map(commodityCard).join('')}${editing ? `<div class="ccard-wrap"><button class="ccard ghost" data-act="new-assembly">${I.plus}Nova commodity</button></div>` : ''}</div>`;
+  if (!db.assemblies.length && !editing) {
+    html += emptyBox('conjunto', 'Nenhuma commodity cadastrada', 'Ative o <b>Modo edição</b> para criar a primeira commodity.');
+  }
+  if (idx.asmParts.has('')) html += asmTree('');
+  html += `<div class="section"><div class="section-head"><h2>Resumo</h2></div><div class="stats">
+      ${stat('peca', parts.length, 'peças cadastradas')}
+      ${stat('inserto', db.inserts.length, 'insertos no catálogo')}
+      ${stat('parafuso', db.screws.length, 'parafusos no catálogo')}
+      ${stat('conjunto', noIns.length + noScr.length, 'pendências de indicação', noIns.length + noScr.length ? 'warn' : '')}
+    </div></div>`;
+  if (noIns.length || noScr.length) {
+    html += `<div class="section"><div class="section-head">${I.alert}<h2>Pendências</h2><span class="muted">itens que ainda precisam de indicação</span></div>
+      <div class="card"><ul class="rows">
+      ${noIns.map(p => `<li>${ico('peca', 'sm')}${pnLink('peca', p.pn)}<span class="sub">${esc(asmNames(p))}</span><span class="end"><span class="chip">Sem inserto</span></span></li>`).join('')}
+      ${noScr.map(({p, e}) => `<li>${ico('inserto', 'sm')}${pnLink('peca', p.pn)}<span class="faint">${I.chev}</span>${pnLink('inserto', e.insert)}<span class="end"><span class="chip">Sem parafuso</span></span></li>`).join('')}
+      </ul></div></div>`;
+  }
+  return html;
+}
+
+function viewAssembly(id) {
+  const a = idx.asm.get(id);
+  if (!a) return notFound('Commodity', id);
+  const list = (idx.asmParts.get(id) || []).slice().sort((x, y) => cmp(x.pn, y.pn));
+  const withIns = list.filter(p => p.inserts.length).length;
+  return crumbs([{label: a.name}]) +
+    hero('conjunto', a.name, {mono: false, desc: a.description, icon: `<span class="hero-art">${asmArt(a)}</span>`,
+      chips: a.short && a.short !== a.name ? `<span class="chip">${esc(a.short)}</span>` : '',
+      actions: `${editBtn('edit-assembly', dattr({id}), 'Editar commodity')}${delBtn('delete-assembly', dattr({id}), 'Excluir commodity')}<button class="btn primary edit-only" data-act="new-part">${I.plus}Nova peça</button>`}) +
+    `<div class="stats">${stat('peca', list.length, 'peças')}${stat('inserto', withIns, 'com inserto indicado')}${stat('conjunto', list.length - withIns, 'sem indicação', list.length - withIns ? 'warn' : '')}</div>` +
+    asmTree(id, false);
+}
+
+function viewPart(pn) {
+  const p = idx.part.get(pn);
+  if (!p) return notFound('Peça', pn);
+  const a = idx.asm.get(partAsmIds(p)[0]);
+  const P = dattr({part: p.pn});
+  const threads = new Set(p.inserts.map(e => idx.ins.get(e.insert)?.thread).filter(Boolean));
+  const screwSet = new Set(p.inserts.flatMap(e => e.screws));
+  let html = crumbs([a ? {label: a.name, href: href('conjunto', a.id)} : {label: 'Sem commodity'}, {label: p.pn}]) +
+    hero('peca', p.pn, {desc: p.description, chips: partAsmIds(p).map(id => `<a class="chip" href="${href('conjunto', id)}">${esc(idx.asm.get(id).name)}</a>`).join('') + kindChip(p.kind),
+      actions: `${editBtn('edit-part', P, 'Editar peça')}${delBtn('delete-part', P, 'Excluir peça')}`}) +
+    `<div class="stats">${stat('inserto', p.inserts.length, p.inserts.length === 1 ? 'inserto indicado' : 'insertos indicados')}${stat('conjunto', threads.size, 'rosca(s)')}${stat('parafuso', screwSet.size, screwSet.size === 1 ? 'parafuso indicado' : 'parafusos indicados')}</div>`;
+  html += `<div class="tree-card"><div class="tree-bar">${I.conjunto}<b>Montagem recomendada</b><span class="faint small">peça → inserto (rosca) → inserto → parafusos</span>
+    <div class="right"><button class="btn primary sm edit-only" data-act="add-entry" ${P}>${I.plus}Indicar inserto</button></div></div>
+    ${p.inserts.length ? '' : `<div class="tree-hint view-only">${I.info}<span>Nenhum inserto indicado ainda. Ative o <b>Modo edição</b> (canto superior direito) para indicar.</span></div>`}
+    ${treeWrap(partLi(p, true))}</div>`;
+  html += partModelsSection(p) + capSection(p);
+  if (p.inserts.length) {
+    html += `<div class="section"><div class="section-head">${I.table}<h2>Combinações</h2><span class="muted">tabela para copiar e colar no Excel</span>
+      <div class="right"><button class="btn sm" data-act="copy-table" ${P}>${I.copy}Copiar tabela</button></div></div>
+      <div class="card tbl-wrap"><table class="tbl"><thead><tr><th>Rosca</th><th>Inserto</th><th></th><th>Parafuso</th><th>Cabeça</th></tr></thead><tbody>
+      ${comboRows(p).map(r => `<tr><td>${threadChip(r.thread)}</td><td>${pnLink('inserto', r.insert)}</td><td>${r.preferred ? prefBadge() : ''}</td>
+        <td>${r.screw ? pnLink('parafuso', r.screw) : '<span class="faint">—</span>'}</td><td>${headChip(r.head)}</td></tr>`).join('')}
+      </tbody></table></div></div>`;
+  }
+  if (p.notes) html += `<div class="section"><div class="section-head"><h2>Observações</h2></div><div class="card" style="padding:14px 16px;white-space:pre-wrap">${esc(p.notes)}</div></div>`;
+  return html;
+}
+function comboRows(p) {
+  const rows = [];
+  const sorted = p.inserts.slice().sort((a, b) => cmp(idx.ins.get(a.insert)?.thread || '', idx.ins.get(b.insert)?.thread || '') || (b.preferred - a.preferred) || cmp(a.insert, b.insert));
+  for (const e of sorted) {
+    const ins = idx.ins.get(e.insert) || {};
+    const base = {part: p.pn, thread: ins.thread || '', insert: e.insert, preferred: !!e.preferred};
+    if (!e.screws.length) rows.push({...base, screw: '', head: ''});
+    e.screws.forEach(s => rows.push({...base, screw: s, head: idx.scr.get(s)?.head || ''}));
+  }
+  return rows;
+}
+
+function viewInsert(pn) {
+  const i = idx.ins.get(pn);
+  if (!i) return notFound('Inserto', pn);
+  const uses = idx.insUse.get(pn) || [];
+  const D = dattr({ins: pn});
+  const screws = new Map();
+  uses.forEach(u => u.entry.screws.forEach(s => pushMap(screws, s, u.part)));
+  const sList = [...screws.keys()].sort(cmp);
+  let html = crumbs([{label: 'Insertos'}, {label: pn}]) +
+    hero('inserto', pn, {desc: i.description, chips: threadChip(i.thread),
+      actions: `${editBtn('edit-insert', D, 'Editar inserto')}${delBtn('delete-insert', D, 'Excluir inserto')}`}) +
+    `<div class="stats">${stat('peca', uses.length, uses.length === 1 ? 'peça usa este inserto' : 'peças usam este inserto')}${stat('parafuso', sList.length, 'parafuso(s) indicado(s)')}</div>`;
+  html += `<div class="section"><div class="section-head"><h2>Parafusos indicados com este inserto</h2></div>` +
+    (sList.length ? `<div class="card"><ul class="rows">${sList.map(s => {
+      const sc = idx.scr.get(s) || {};
+      const ps = screws.get(s);
+      return `<li>${ico('parafuso', 'sm')}${pnLink('parafuso', s)}${copyBtn(s)}${headChip(sc.head)}<span class="sub">${esc(sc.description || '')}</span>
+        <span class="end"><span class="chip" title="${esc(ps.map(p => p.pn).join(', '))}">em ${plural(ps.length, 'peça')}</span></span></li>`;
+    }).join('')}</ul></div>` : emptyBox('parafuso', 'Nenhum parafuso indicado', 'Indique parafusos a partir da página de uma peça que usa este inserto.')) + '</div>';
+  html += v3dSection(i);
+  html += usedIn(uses, u => `${u.entry.preferred ? prefBadge() : ''}<span class="chip">${plural(u.entry.screws.length, 'parafuso')}</span>`);
+  if (i.notes) html += `<div class="section"><div class="section-head"><h2>Observações</h2></div><div class="card" style="padding:14px 16px;white-space:pre-wrap">${esc(i.notes)}</div></div>`;
+  return html;
+}
+function viewScrew(pn) {
+  const s = idx.scr.get(pn);
+  if (!s) return notFound('Parafuso', pn);
+  const uses = idx.scrUse.get(pn) || [];
+  const D = dattr({scr: pn});
+  const ins = new Map();
+  uses.forEach(u => pushMap(ins, u.entry.insert, u.part));
+  const iList = [...ins.keys()].sort(cmp);
+  let html = crumbs([{label: 'Parafusos'}, {label: pn}]) +
+    hero('parafuso', pn, {desc: s.description, chips: headChip(s.head) + threadChip(s.thread),
+      actions: `${editBtn('edit-screw', D, 'Editar parafuso')}${delBtn('delete-screw', D, 'Excluir parafuso')}`}) +
+    `<div class="stats">${stat('inserto', iList.length, 'inserto(s) compatível(is)')}${stat('peca', new Set(uses.map(u => u.part.pn)).size, 'peça(s)')}</div>`;
+  html += `<div class="section"><div class="section-head"><h2>Indicado com os insertos</h2></div>` +
+    (iList.length ? `<div class="card"><ul class="rows">${iList.map(i => {
+      const it = idx.ins.get(i) || {};
+      const ps = ins.get(i);
+      return `<li>${ico('inserto', 'sm')}${pnLink('inserto', i)}${copyBtn(i)}${threadChip(it.thread)}<span class="sub">${esc(it.description || '')}</span>
+        <span class="end"><span class="chip" title="${esc(ps.map(p => p.pn).join(', '))}">em ${plural(ps.length, 'peça')}</span></span></li>`;
+    }).join('')}</ul></div>` : emptyBox('inserto', 'Ainda não indicado', 'Este parafuso está no catálogo mas não foi indicado em nenhuma peça.')) + '</div>';
+  html += v3dSection(s);
+  html += usedIn(uses, u => `<span class="faint">via</span>${pnLink('inserto', u.entry.insert)}`);
+  if (s.notes) html += `<div class="section"><div class="section-head"><h2>Observações</h2></div><div class="card" style="padding:14px 16px;white-space:pre-wrap">${esc(s.notes)}</div></div>`;
+  return html;
+}
+function usedIn(uses, extra) {
+  const sorted = uses.slice().sort((a, b) => cmp(a.part.pn, b.part.pn));
+  return `<div class="section"><div class="section-head"><h2>Onde é usado</h2><span class="muted">${plural(sorted.length, 'ocorrência')}</span></div>` +
+    (sorted.length ? `<div class="card"><ul class="rows">${sorted.map(u => `<li>${ico('peca', 'sm')}${pnLink('peca', u.part.pn)}<span class="sub">${esc(asmNames(u.part))}</span><span class="end">${extra(u)}</span></li>`).join('')}</ul></div>`
+      : emptyBox('peca', 'Não usado', 'Nenhuma peça usa este item ainda.')) + '</div>';
+}
+function notFound(kind, id) {
+  return crumbs([{label: id}]) + emptyBox('alert', `${kind} não encontrado(a)`, `<span class="mono">${esc(id)}</span> não existe nesta biblioteca.`, `<a class="btn" href="#/">Voltar ao início</a>`);
+}
+
+/* ---------------- base na pasta (File System Access) ---------------- */
+// Pasta que contém este HTML. Dentro dela: base/dados.js e base/modelos/<PN>.js
+const fs = {dir: null, ok: false, pending: null, saving: false, again: false, override: false, savedAt: null, timer: 0, folder: FROM_FOLDER};
+const idb = (mode, fn) => new Promise(resolve => {
+  try {
+    const rq = indexedDB.open('biblioteca-pn', 1);
+    rq.onupgradeneeded = () => rq.result.createObjectStore('kv');
+    rq.onerror = () => resolve(null);
+    rq.onsuccess = () => {
+      try { const r = fn(rq.result.transaction('kv', mode).objectStore('kv')); r.onsuccess = () => resolve(r.result); r.onerror = () => resolve(null); }
+      catch (_) { resolve(null); }
+    };
+  } catch (_) { resolve(null); }
+});
+const DIR_KEY = 'dir:' + location.pathname;
+async function connectBase() {
+  if (!window.showDirectoryPicker) return toast('Este navegador não deixa salvar em pasta. Use o Edge ou o Chrome.', true);
+  let dir;
+  try { dir = await window.showDirectoryPicker({mode: 'readwrite'}); } catch (_) { return; }
+  const html = decodeURIComponent(location.pathname.split('/').pop() || '');
+  if (location.protocol === 'file:' && html) {
+    try { await dir.getFileHandle(html); }
+    catch (_) { return toast(`Pasta errada: escolha a pasta onde está o arquivo ${html}.`, true); }
+  }
+  fs.dir = dir; fs.ok = true; fs.pending = null;
+  idb('readwrite', st => st.put(dir, DIR_KEY));
+  await saveBase();
+  if (fs.ok && !fs.saving) toast('Pasta conectada. A partir de agora as alterações são gravadas em base/dados.js.');
+}
+async function saveBase() {
+  if (!fs.ok) return;
+  if (fs.saving) { fs.again = true; return; }
+  fs.saving = true; renderSidebar();
+  try {
+    const base = await fs.dir.getDirectoryHandle('base', {create: true});
+    const fh = await base.getFileHandle('dados.js', {create: true});
+    const cur = /"updatedAt":"([^"]+)"/.exec((await (await fh.getFile()).text()).slice(0, 400));
+    if (cur && cur[1] !== SEED.updatedAt && cur[1] !== db.updatedAt && !fs.override) {
+      fs.saving = false; renderSidebar();
+      confirmBox('A base foi alterada por outra pessoa', `O arquivo <b>base/dados.js</b> foi salvo em <b>${fmtDate(cur[1])}</b>, depois que você abriu esta página. Se continuar, as suas alterações <b>substituem</b> as dela. Para ver o que ela mudou, cancele e recarregue a página (as suas edições ficam guardadas em Dados › Recuperar edições antigas).`, 'Substituir pela minha versão', () => { fs.override = true; saveBase(); });
+      return;
+    }
+    const w = await fh.createWritable();
+    await w.write('window.BIBLIOTECA_DADOS = ' + JSON.stringify(db) + ';\n');
+    await w.close();
+    SEED = JSON.parse(JSON.stringify(db));
+    lsDel(KEY); source = 'file'; fs.folder = true; fs.savedAt = new Date(); fs.override = false;
+  } catch (x) {
+    if (x && x.name === 'NotAllowedError') { fs.pending = fs.dir; fs.ok = false; }
+    toast('Não consegui gravar na pasta: ' + (x && x.message || x) + ' As alterações continuam guardadas neste navegador.', true);
+  }
+  fs.saving = false; renderSidebar();
+  if (fs.again) { fs.again = false; saveBase(); }
+}
+// Reaproveita a pasta escolhida antes; o navegador pede a permissão de novo com um clique.
+function regrantBase() {
+  if (!fs.pending) return;
+  const h = fs.pending;
+  h.requestPermission({mode: 'readwrite'}).then(r => {
+    if (r !== 'granted') return;
+    fs.dir = h; fs.ok = true; fs.pending = null; renderSidebar();
+    if (source === 'local') saveBase();
+  }).catch(() => {});
+}
+function statusHtml() {
+  const box = (cls, dot, title, text, act) => `<${act ? 'button' : 'div'} class="status ${cls}" ${act ? `data-act="${act}"` : ''}><span class="dot ${dot}"></span><div><b>${title}</b><span>${text}</span></div></${act ? 'button' : 'div'}>`;
+  if (fs.saving) return box('', 'warn', 'Salvando na pasta…', 'base/dados.js');
+  if (source === 'local') {
+    if (fs.ok) return box('local', 'warn', 'Alterações ainda não gravadas', 'Clique para gravar na pasta agora.', 'save-base');
+    if (fs.pending) return box('local', 'warn', 'Alterações só neste navegador', 'Clique para liberar a pasta da base e gravar.', 'connect-base');
+    return window.showDirectoryPicker
+      ? box('local', 'warn', 'Alterações só neste navegador', 'Clique para conectar a pasta da base e gravar.', 'connect-base')
+      : box('local', 'warn', 'Alterações salvas só neste navegador', 'Clique para salvar um novo HTML e compartilhar.', 'export-html');
+  }
+  if (fs.ok) return box('', 'ok', 'Base na pasta, gravação automática', fs.savedAt ? 'Gravado às ' + fs.savedAt.toLocaleTimeString('pt-BR', {hour: '2-digit', minute: '2-digit'}) : 'Atualizada em ' + fmtDate(db.updatedAt));
+  return box('', 'ok', fs.folder ? 'Dados da pasta base' : 'Dados do arquivo', 'Atualizado em ' + fmtDate(db.updatedAt));
+}
+/* modelos 3D guardados em base/modelos/<PN>.js */
+const b64 = bytes => { let o = ''; for (let i = 0; i < bytes.length; i += 0x8000) o += String.fromCharCode.apply(null, bytes.subarray(i, i + 0x8000)); return btoa(o); };
+const unb64 = t => { const b = atob(t), o = new Uint8Array(b.length); for (let i = 0; i < b.length; i++) o[i] = b.charCodeAt(i); return o; };
+function encodeModel(m) {
+  const mn = [Infinity, Infinity, Infinity], mx = [-Infinity, -Infinity, -Infinity];
+  for (const a of [m.pos, m.lines]) for (let i = 0; i < a.length; i++) { const k = i % 3; if (a[i] < mn[k]) mn[k] = a[i]; if (a[i] > mx[k]) mx[k] = a[i]; }
+  const q16 = a => { const o = new Uint16Array(a.length); for (let i = 0; i < a.length; i++) { const k = i % 3; o[i] = Math.round((a[i] - mn[k]) / ((mx[k] - mn[k]) || 1) * 65535); } return b64(new Uint8Array(o.buffer)); };
+  const n8 = new Int8Array(m.nor.length);
+  for (let i = 0; i < n8.length; i++) n8[i] = Math.max(-127, Math.min(127, Math.round(m.nor[i] * 127)));
+  return {v: 1, name: m.name, parts: m.parts, min: mn, max: mx, pos: q16(m.pos), nor: b64(new Uint8Array(n8.buffer)), col: b64(m.col), lines: q16(m.lines),
+    nodes: m.nodes.map(n => ({n: n.name, p: n.parent ? n.parent.id : -1, r: n.ranges}))};
+}
+function decodeModel(d) {
+  const f = t => { const b = unb64(t), q = new Uint16Array(b.buffer, 0, b.length >> 1), o = new Float32Array(q.length); for (let i = 0; i < q.length; i++) { const k = i % 3; o[i] = d.min[k] + q[i] / 65535 * (d.max[k] - d.min[k]); } return o; };
+  const nb = new Int8Array(unb64(d.nor).buffer), nor = new Float32Array(nb.length);
+  for (let i = 0; i < nb.length; i++) nor[i] = nb[i] / 127;
+  const nodes = d.nodes.map((n, id) => ({id, name: n.n, parent: null, children: [], ranges: n.r, p: n.p}));
+  nodes.forEach(n => { if (n.p >= 0) { n.parent = nodes[n.p]; n.parent.children.push(n); } });
+  const collect = n => { n.all = [...n.ranges]; for (const c of n.children) n.all.push(...collect(c)); return n.all; };
+  nodes.filter(n => !n.parent).forEach(collect);
+  return {nodes, sel: -1, name: d.name, pos: f(d.pos), nor, col: unb64(d.col), lines: f(d.lines), parts: d.parts,
+    center: [(d.min[0] + d.max[0]) / 2, (d.min[1] + d.max[1]) / 2, (d.min[2] + d.max[2]) / 2], radius: Math.hypot(d.max[0] - d.min[0], d.max[1] - d.min[1], d.max[2] - d.min[2]) / 2 || 1};
+}
+async function saveModelFile(pn, m) {
+  const base = await fs.dir.getDirectoryHandle('base', {create: true});
+  const dir = await base.getDirectoryHandle('modelos', {create: true});
+  const file = pn.replace(/[^A-Za-z0-9._-]+/g, '_') + '.js';
+  const w = await (await dir.getFileHandle(file, {create: true})).createWritable();
+  await w.write('BIBLIOTECA_MODELO(' + JSON.stringify(pn) + ',' + JSON.stringify(encodeModel(m)) + ');\n');
+  await w.close();
+  return file;
+}
+const modelFail = new Set(), modelLoading = new Set();
+window.BIBLIOTECA_MODELO = (pn, d) => {
+  try { models.set(pn, decodeModel(d)); } catch (_) { modelFail.add(pn); }
+  modelLoading.delete(pn);
+  const b = $('#v3d');
+  if (b && b.dataset.part === pn) renderMain(true);
+};
+function loadStoredModel(p, box) {
+  if (modelFail.has(p.pn)) { box.querySelector('.v3d-drop div').innerHTML = `<b>O modelo 3D desta peça não está na pasta</b>Era esperado em base/modelos/${esc(p.model.file)}. Arraste o .3dxml aqui para abrir.`; return; }
+  box.querySelector('.v3d-drop div').innerHTML = '<b>Carregando o modelo 3D…</b>';
+  if (modelLoading.has(p.pn)) return;
+  modelLoading.add(p.pn);
+  const sc = document.createElement('script');
+  sc.src = 'base/modelos/' + encodeURIComponent(p.model.file) + '?v=' + encodeURIComponent(p.model.at || '');
+  sc.onload = () => sc.remove();
+  sc.onerror = () => { sc.remove(); modelLoading.delete(p.pn); modelFail.add(p.pn); const b = $('#v3d'); if (b && b.dataset.part === p.pn) renderMain(true); };
+  document.head.appendChild(sc);
+}
+
+/* ---------------- 3D viewer (3DXML tesselado) ---------------- */
+const KINDS = {extrudado: 'Extrudado', fabricado: 'Fabricado', hardware: 'Hardware'};
+const KIND_OPTS = [{value: '', label: '—'}, ...Object.entries(KINDS).map(([value, label]) => ({value, label}))];
+const kindChip = k => KINDS[k] ? `<span class="chip kind">${KINDS[k]}</span>` : '';
+const findVariant = pn => { for (const p of db.parts) for (const v of p.variants || []) if (v.pn === pn) return v; return null; };
+const anyItem = pn => idx.part.get(pn) || idx.ins.get(pn) || idx.scr.get(pn) || findVariant(pn);
+const v3dPick = new Map();       // PN da peça -> PN escolhido para ver no 3D
+const models = new Map();          // PN -> modelo em memória (vem de base/modelos ou de um arquivo aberto na hora)
+let v3dNoTree = false;
+let v3d = null;                    // viewer montado na página atual
+function zipEntries(buf) {
+  const dv = new DataView(buf.buffer, buf.byteOffset, buf.byteLength);
+  let i = buf.length - 22;
+  const min = Math.max(0, buf.length - 22 - 65535);
+  for (; i >= min; i--) if (dv.getUint32(i, true) === 0x06054b50) break;
+  if (i < min) throw new Error('O arquivo não é um 3DXML válido (ZIP ilegível).');
+  const n = dv.getUint16(i + 10, true);
+  let p = dv.getUint32(i + 16, true);
+  const dec = new TextDecoder(), out = [];
+  for (let k = 0; k < n && p + 46 <= buf.length && dv.getUint32(p, true) === 0x02014b50; k++) {
+    const nlen = dv.getUint16(p + 28, true), elen = dv.getUint16(p + 30, true), clen = dv.getUint16(p + 32, true);
+    out.push({name: dec.decode(buf.subarray(p + 46, p + 46 + nlen)), method: dv.getUint16(p + 10, true), csize: dv.getUint32(p + 20, true), lho: dv.getUint32(p + 42, true)});
+    p += 46 + nlen + elen + clen;
+  }
+  return out;
+}
+async function zipText(buf, e) {
+  const dv = new DataView(buf.buffer, buf.byteOffset, buf.byteLength);
+  const start = e.lho + 30 + dv.getUint16(e.lho + 26, true) + dv.getUint16(e.lho + 28, true);
+  const comp = buf.subarray(start, start + e.csize);
+  if (e.method === 0) return new TextDecoder().decode(comp);
+  if (e.method !== 8) throw new Error('Compactação não suportada dentro do 3DXML.');
+  return await new Response(new Blob([comp]).stream().pipeThrough(new DecompressionStream('deflate-raw'))).text();
+}
+const xmlAll = (node, name) => [...node.getElementsByTagNameNS('*', name)];
+const xmlKids = (node, name) => [...node.children].filter(c => c.localName === name);
+const numList = t => { const a = (t || '').trim().split(/[\s,]+/); const o = new Float64Array(a.length); let n = 0; for (const x of a) if (x !== '') o[n++] = +x; return o.subarray(0, n); };
+const insideLod = el => { for (let n = el.parentNode; n && n.nodeType === 1; n = n.parentNode) if (n.localName === 'PolygonalLOD') return true; return false; };
+function repColor(el, fallback) {
+  for (const sa of xmlKids(el, 'SurfaceAttributes')) {
+    const c = xmlAll(sa, 'Color')[0];
+    if (c && c.hasAttribute('red')) return [Math.round(c.getAttribute('red') * 255), Math.round(c.getAttribute('green') * 255), Math.round(c.getAttribute('blue') * 255)];
+  }
+  return fallback;
+}
+// One .3DRep file -> local geometry {pos, nor, col, lines}
+function parseRep(text) {
+  const doc = new DOMParser().parseFromString(text, 'application/xml');
+  if (doc.getElementsByTagName('parsererror').length) throw new Error('XML do modelo ilegível.');
+  const pos = [], nor = [], col = [], lines = [];
+  for (const vb of xmlAll(doc, 'VertexBuffer')) {
+    const rep = vb.parentNode;
+    const P = numList((xmlKids(vb, 'Positions')[0] || {}).textContent);
+    const N = numList((xmlKids(vb, 'Normals')[0] || {}).textContent);
+    const hasN = N.length === P.length;
+    let faceSets = xmlKids(rep, 'Faces');
+    if (!faceSets.length) faceSets = xmlAll(rep, 'Faces').slice(0, 1);
+    const base = repColor(rep, [176, 184, 196]);
+    const tri = (a, b, c, color) => {
+      if (a === b || b === c || a === c) return;
+      const ia = a * 3, ib = b * 3, ic = c * 3;
+      if (ic + 2 >= P.length || ia + 2 >= P.length || ib + 2 >= P.length) return;
+      let n;
+      if (hasN) n = [N[ia], N[ia + 1], N[ia + 2], N[ib], N[ib + 1], N[ib + 2], N[ic], N[ic + 1], N[ic + 2]];
+      else {
+        const ux = P[ib] - P[ia], uy = P[ib + 1] - P[ia + 1], uz = P[ib + 2] - P[ia + 2], vx = P[ic] - P[ia], vy = P[ic + 1] - P[ia + 1], vz = P[ic + 2] - P[ia + 2];
+        const x = uy * vz - uz * vy, y = uz * vx - ux * vz, z = ux * vy - uy * vx, l = Math.hypot(x, y, z) || 1;
+        n = [x / l, y / l, z / l, x / l, y / l, z / l, x / l, y / l, z / l];
+      }
+      pos.push(P[ia], P[ia + 1], P[ia + 2], P[ib], P[ib + 1], P[ib + 2], P[ic], P[ic + 1], P[ic + 2]);
+      nor.push(...n);
+      col.push(...color, ...color, ...color);
+    };
+    for (const fs of faceSets) for (const f of xmlKids(fs, 'Face')) {
+      const color = repColor(f, base);
+      const t = numList(f.getAttribute('triangles'));
+      for (let i = 0; i + 2 < t.length; i += 3) tri(t[i], t[i + 1], t[i + 2], color);
+      for (const st of (f.getAttribute('strips') || '').split(',')) {
+        const q = numList(st);
+        for (let i = 2; i < q.length; i++) i % 2 ? tri(q[i - 1], q[i - 2], q[i], color) : tri(q[i - 2], q[i - 1], q[i], color);
+      }
+      for (const fn of (f.getAttribute('fans') || '').split(',')) {
+        const q = numList(fn);
+        for (let i = 2; i < q.length; i++) tri(q[0], q[i - 1], q[i], color);
+      }
+    }
+  }
+  for (const pl of xmlAll(doc, 'Polyline')) {
+    if (insideLod(pl)) continue;
+    const v = numList(pl.getAttribute('vertices'));
+    for (let i = 0; i + 5 < v.length; i += 3) lines.push(v[i], v[i + 1], v[i + 2], v[i + 3], v[i + 4], v[i + 5]);
+  }
+  return {pos, nor, col, lines};
+}
+const M_ID = [1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0];   // 3 colunas de rotação + translação
+const mMul = (a, b) => {
+  const o = new Array(12);
+  for (let c = 0; c < 3; c++) for (let r = 0; r < 3; r++) o[c * 3 + r] = a[r] * b[c * 3] + a[3 + r] * b[c * 3 + 1] + a[6 + r] * b[c * 3 + 2];
+  for (let r = 0; r < 3; r++) o[9 + r] = a[r] * b[9] + a[3 + r] * b[10] + a[6 + r] * b[11] + a[9 + r];
+  return o;
+};
+async function load3dxml(file) {
+  const buf = new Uint8Array(await file.arrayBuffer());
+  const isZip = buf[0] === 0x50 && buf[1] === 0x4b;
+  const entries = isZip ? zipEntries(buf) : [];
+  const byName = new Map(entries.map(e => [e.name.toLowerCase(), e]));
+  const repCache = new Map();
+  const getRep = async name => {
+    const key = name.toLowerCase();
+    if (!repCache.has(key)) {
+      const e = byName.get(key) || entries.find(x => x.name.toLowerCase().endsWith('/' + key));
+      let g = null;
+      if (e) { const t = await zipText(buf, e); if (/^\s*</.test(t.slice(0, 200).replace(/^\ufeff/, ''))) g = parseRep(t); }   // binário (UVR/CGR): ignora
+      repCache.set(key, g);
+    }
+    return repCache.get(key);
+  };
+  const P = [], N = [], C = [], L = [];
+  let parts = 0;
+  const nodes = [];
+  const mkNode = (name, parent) => { const n = {id: nodes.length, name, parent, children: [], ranges: []}; nodes.push(n); if (parent) parent.children.push(n); return n; };
+  const add = (g, m) => {
+    if (!g || (!g.pos.length && !g.lines.length)) return null;
+    parts++;
+    const start = P.length / 3;
+    for (let i = 0; i < g.pos.length; i += 3) {
+      const x = g.pos[i], y = g.pos[i + 1], z = g.pos[i + 2], a = g.nor[i], b = g.nor[i + 1], c = g.nor[i + 2];
+      P.push(m[0] * x + m[3] * y + m[6] * z + m[9], m[1] * x + m[4] * y + m[7] * z + m[10], m[2] * x + m[5] * y + m[8] * z + m[11]);
+      N.push(m[0] * a + m[3] * b + m[6] * c, m[1] * a + m[4] * b + m[7] * c, m[2] * a + m[5] * b + m[8] * c);
+    }
+    for (const v of g.col) C.push(v);
+    for (let i = 0; i < g.lines.length; i += 3) {
+      const x = g.lines[i], y = g.lines[i + 1], z = g.lines[i + 2];
+      L.push(m[0] * x + m[3] * y + m[6] * z + m[9], m[1] * x + m[4] * y + m[7] * z + m[10], m[2] * x + m[5] * y + m[8] * z + m[11]);
+    }
+    return P.length / 3 > start ? [start, P.length / 3 - start] : null;
+  };
+  const addTo = (node, g, m) => { const r = add(g, m); if (r) node.ranges.push(r); };
+  if (!isZip) addTo(mkNode(file.name, null), parseRep(new TextDecoder().decode(buf)), M_ID);
+  else {
+    // product structure: Reference3D / Instance3D (matrix) / ReferenceRep (file) / InstanceRep
+    let rootName = '';
+    const man = byName.get('manifest.xml');
+    if (man) { const m = /<Root>\s*([^<]+?)\s*<\/Root>/i.exec(await zipText(buf, man)); if (m) rootName = m[1].toLowerCase(); }
+    const mainEntry = byName.get(rootName) || entries.find(e => /\.3dxml$/i.test(e.name));
+    let placed = false;
+    if (mainEntry) {
+      const doc = new DOMParser().parseFromString(await zipText(buf, mainEntry), 'application/xml');
+      const idOf = t => { const m = /(\d+)\s*$/.exec(t || ''); return m ? m[1] : ''; };
+      const kid = (el, name) => idOf((xmlKids(el, name)[0] || {}).textContent);
+      const repFile = new Map(), inst = new Map(), instRep = new Map(), instanced = new Set();
+      for (const r of xmlAll(doc, 'ReferenceRep')) {
+        const f = (r.getAttribute('associatedFile') || '').split(':').pop();
+        if (f && (r.getAttribute('format') || 'TESSELLATED').toUpperCase() === 'TESSELLATED') repFile.set(r.getAttribute('id'), f);
+      }
+      for (const el of xmlAll(doc, 'Instance3D')) {
+        const parent = kid(el, 'IsAggregatedBy'), child = kid(el, 'IsInstanceOf');
+        const mt = numList((xmlKids(el, 'RelativeMatrix')[0] || {}).textContent);
+        pushMap(inst, parent, {child, name: el.getAttribute('name') || '', m: mt.length === 12 ? [...mt] : M_ID});
+        instanced.add(child);
+      }
+      for (const el of xmlAll(doc, 'InstanceRep')) pushMap(instRep, kid(el, 'IsAggregatedBy'), kid(el, 'IsInstanceOf'));
+      const refs = xmlAll(doc, 'Reference3D').map(r => r.getAttribute('id'));
+      const ps = xmlAll(doc, 'ProductStructure')[0];
+      const roots = ps && ps.getAttribute('root') ? [ps.getAttribute('root')] : refs.filter(id => !instanced.has(id));
+      const refName = new Map(xmlAll(doc, 'Reference3D').map(r => [r.getAttribute('id'), r.getAttribute('name') || '']));
+      const walk = async (id, m, depth, parent, iname) => {
+        if (depth > 40) return;
+        const node = mkNode(refName.get(id) || iname || 'Componente', parent);
+        for (const rid of instRep.get(id) || []) if (repFile.has(rid)) { addTo(node, await getRep(repFile.get(rid)), m); placed = true; }
+        for (const c of inst.get(id) || []) await walk(c.child, mMul(m, c.m), depth + 1, node, c.name);
+      };
+      for (const r of roots) await walk(r, M_ID, 0, null, '');
+    }
+    if (!placed) { nodes.length = 0; for (const e of entries) if (/\.3drep$/i.test(e.name)) addTo(mkNode(e.name.replace(/\.3drep$/i, ''), null), await getRep(e.name), M_ID); }
+  }
+  if (!P.length && !L.length) throw new Error('Não encontrei geometria tesselada neste arquivo. Passe-o no Inspetor 3DXML para conferir o tipo de exportação.');
+  let min = [Infinity, Infinity, Infinity], max = [-Infinity, -Infinity, -Infinity];
+  const grow = a => { for (let i = 0; i < a.length; i++) { const k = i % 3; if (a[i] < min[k]) min[k] = a[i]; if (a[i] > max[k]) max[k] = a[i]; } };
+  grow(P); grow(L);
+  const collect = n => { n.all = [...n.ranges]; for (const c of n.children) n.all.push(...collect(c)); n.children = n.children.filter(c => c.all.length); return n.all; };
+  nodes.filter(n => !n.parent).forEach(collect);
+  return {nodes, sel: -1, name: file.name, pos: new Float32Array(P), nor: new Float32Array(N), col: new Uint8Array(C), lines: new Float32Array(L),
+    center: [(min[0] + max[0]) / 2, (min[1] + max[1]) / 2, (min[2] + max[2]) / 2], radius: Math.hypot(max[0] - min[0], max[1] - min[1], max[2] - min[2]) / 2 || 1, parts};
+}
+const rotX = a => { const c = Math.cos(a), s = Math.sin(a); return [1, 0, 0, 0, c, s, 0, -s, c]; };   // mat3 por colunas
+const rotY = a => { const c = Math.cos(a), s = Math.sin(a); return [c, 0, -s, 0, 1, 0, s, 0, c]; };
+const m3 = (a, b) => { const o = new Array(9); for (let c = 0; c < 3; c++) for (let r = 0; r < 3; r++) o[c * 3 + r] = a[r] * b[c * 3] + a[3 + r] * b[c * 3 + 1] + a[6 + r] * b[c * 3 + 2]; return o; };
+const Z_UP = rotX(-Math.PI / 2);   // CATIA: Z para cima
+const VIEWS = {iso: () => m3(rotX(0.45), m3(rotY(-0.7), Z_UP)), frente: () => Z_UP, topo: () => [1, 0, 0, 0, 1, 0, 0, 0, 1], lado: () => m3(rotY(-Math.PI / 2), Z_UP)};
+function createViewer(box, model, onPick) {
+  const canvas = document.createElement('canvas');
+  box.appendChild(canvas);
+  const gl = canvas.getContext('webgl', {antialias: true, alpha: true, premultipliedAlpha: false});
+  if (!gl) throw new Error('Este navegador não tem WebGL ligado.');
+  const sh = (type, src) => { const o = gl.createShader(type); gl.shaderSource(o, src); gl.compileShader(o); return o; };
+  const prog = gl.createProgram();
+  gl.attachShader(prog, sh(gl.VERTEX_SHADER, 'attribute vec3 aP;attribute vec3 aN;attribute vec3 aC;uniform mat3 uR;uniform vec3 uCt;uniform vec3 uS;uniform vec2 uPan;varying vec3 vN;varying vec3 vC;void main(){vec3 v=uR*(aP-uCt);vN=uR*aN;vC=aC;gl_Position=vec4(v.x*uS.x+uPan.x,v.y*uS.y+uPan.y,-v.z*uS.z,1.0);}'));
+  gl.attachShader(prog, sh(gl.FRAGMENT_SHADER, 'precision mediump float;varying vec3 vN;varying vec3 vC;uniform vec4 uLine;uniform vec4 uTint;void main(){if(uLine.a>0.5){gl_FragColor=vec4(uLine.rgb,1.0);}else{float d=abs(dot(normalize(vN),normalize(vec3(0.35,0.5,0.8))));gl_FragColor=vec4(mix(vC,uTint.rgb,uTint.a)*(0.38+0.62*d),1.0);}}'));
+  gl.bindAttribLocation(prog, 0, 'aP'); gl.bindAttribLocation(prog, 1, 'aN'); gl.bindAttribLocation(prog, 2, 'aC');
+  gl.linkProgram(prog); gl.useProgram(prog);
+  const U = n => gl.getUniformLocation(prog, n);
+  const mk = data => { const b = gl.createBuffer(); gl.bindBuffer(gl.ARRAY_BUFFER, b); gl.bufferData(gl.ARRAY_BUFFER, data, gl.STATIC_DRAW); return b; };
+  const bP = mk(model.pos), bN = mk(model.nor), bC = mk(model.col), bL = mk(model.lines);
+  const st = {R: VIEWS.iso(), zoom: 1, pan: [0, 0], edges: true, dead: false, sel: [], ct: model.center};
+  let raf = 0;
+  const draw = () => {
+    raf = 0;
+    if (st.dead) return;
+    const dpr = Math.min(window.devicePixelRatio || 1, 2), w = Math.max(1, Math.round(box.clientWidth * dpr)), h = Math.max(1, Math.round(box.clientHeight * dpr));
+    if (canvas.width !== w || canvas.height !== h) { canvas.width = w; canvas.height = h; }
+    gl.viewport(0, 0, w, h);
+    gl.clearColor(0, 0, 0, 0); gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
+    gl.enable(gl.DEPTH_TEST);
+    const k = st.zoom * 0.9 / model.radius, asp = w / h;
+    gl.uniformMatrix3fv(U('uR'), false, st.R);
+    gl.uniform3fv(U('uCt'), st.ct);
+    gl.uniform3f(U('uS'), asp > 1 ? k / asp : k, asp > 1 ? k : k * asp, 0.45 / model.radius);
+    gl.uniform2fv(U('uPan'), st.pan);
+    if (model.pos.length) {
+      gl.enable(gl.POLYGON_OFFSET_FILL); gl.polygonOffset(1, 1);
+      gl.uniform4f(U('uLine'), 0, 0, 0, 0);
+      gl.enableVertexAttribArray(0); gl.bindBuffer(gl.ARRAY_BUFFER, bP); gl.vertexAttribPointer(0, 3, gl.FLOAT, false, 0, 0);
+      gl.enableVertexAttribArray(1); gl.bindBuffer(gl.ARRAY_BUFFER, bN); gl.vertexAttribPointer(1, 3, gl.FLOAT, false, 0, 0);
+      gl.enableVertexAttribArray(2); gl.bindBuffer(gl.ARRAY_BUFFER, bC); gl.vertexAttribPointer(2, 3, gl.UNSIGNED_BYTE, true, 0, 0);
+      gl.uniform4f(U('uTint'), 0.5, 0.52, 0.56, st.sel.length ? 0.55 : 0);   // com seleção, o resto fica acinzentado
+      gl.drawArrays(gl.TRIANGLES, 0, model.pos.length / 3);
+      if (st.sel.length) {
+        gl.polygonOffset(0.2, 0.2); gl.depthFunc(gl.LEQUAL);
+        gl.uniform4f(U('uTint'), 0.16, 0.42, 1, 0.8);
+        for (const [a, n] of st.sel) gl.drawArrays(gl.TRIANGLES, a, n);
+        gl.depthFunc(gl.LESS);
+      }
+      gl.disable(gl.POLYGON_OFFSET_FILL);
+    }
+    if (model.lines.length && (st.edges || !model.pos.length)) {
+      const dark = getComputedStyle(document.documentElement).colorScheme.includes('dark');
+      gl.uniform4f(U('uLine'), dark ? 0.86 : 0.1, dark ? 0.89 : 0.13, dark ? 0.94 : 0.2, 1);
+      gl.disableVertexAttribArray(1); gl.disableVertexAttribArray(2);
+      gl.vertexAttrib3f(1, 0, 0, 1); gl.vertexAttrib3f(2, 0, 0, 0);
+      gl.enableVertexAttribArray(0); gl.bindBuffer(gl.ARRAY_BUFFER, bL); gl.vertexAttribPointer(0, 3, gl.FLOAT, false, 0, 0);
+      gl.drawArrays(gl.LINES, 0, model.lines.length / 3);
+    }
+  };
+  const redraw = () => { if (!raf) raf = requestAnimationFrame(draw); };
+  const ptr = new Map();
+  let pinch = 0;
+  canvas.addEventListener('contextmenu', e => e.preventDefault());
+  canvas.addEventListener('mousedown', e => { if (e.button === 1) e.preventDefault(); });   // sem rolagem automática do navegador
+  canvas.addEventListener('pointerdown', e => { canvas.setPointerCapture(e.pointerId); ptr.set(e.pointerId, {x: e.clientX, y: e.clientY, x0: e.clientX, y0: e.clientY, pan: e.button !== 0 || e.shiftKey}); pinch = 0; });
+  const pick = (cx, cy) => {
+    const rc = canvas.getBoundingClientRect(), nx = (cx - rc.left) / rc.width * 2 - 1, ny = 1 - (cy - rc.top) / rc.height * 2;
+    const asp = rc.width / rc.height, k = st.zoom * 0.9 / model.radius, sx = asp > 1 ? k / asp : k, sy = asp > 1 ? k : k * asp;
+    const R = st.R, c = st.ct, p = model.pos, q = new Float64Array(9);
+    let best = -Infinity, hit = -1;
+    for (let i = 0; i < p.length; i += 9) {
+      for (let j = 0; j < 3; j++) {
+        const x = p[i + j * 3] - c[0], y = p[i + j * 3 + 1] - c[1], z = p[i + j * 3 + 2] - c[2];
+        q[j * 3] = (R[0] * x + R[3] * y + R[6] * z) * sx + st.pan[0]; q[j * 3 + 1] = (R[1] * x + R[4] * y + R[7] * z) * sy + st.pan[1]; q[j * 3 + 2] = R[2] * x + R[5] * y + R[8] * z;
+      }
+      const d = (q[4] - q[7]) * (q[0] - q[6]) + (q[6] - q[3]) * (q[1] - q[7]);
+      if (Math.abs(d) < 1e-12) continue;
+      const a = ((q[4] - q[7]) * (nx - q[6]) + (q[6] - q[3]) * (ny - q[7])) / d, b = ((q[7] - q[1]) * (nx - q[6]) + (q[0] - q[6]) * (ny - q[7])) / d, g = 1 - a - b;
+      if (a < 0 || b < 0 || g < 0) continue;
+      const z = a * q[2] + b * q[5] + g * q[8];
+      if (z > best) { best = z; hit = i / 3; }
+    }
+    return hit;
+  };
+  const up = e => {
+    const p = ptr.get(e.pointerId);
+    if (p && onPick && e.type === 'pointerup' && e.button === 0 && !p.pan && !p.chorded && ptr.size === 1 && Math.hypot(e.clientX - p.x0, e.clientY - p.y0) < 5) onPick(pick(e.clientX, e.clientY));
+    ptr.delete(e.pointerId); pinch = 0;
+  };
+  canvas.addEventListener('pointerup', up); canvas.addEventListener('pointercancel', up);
+  canvas.addEventListener('pointermove', e => {
+    const p = ptr.get(e.pointerId);
+    if (!p) return;
+    const dx = e.clientX - p.x, dy = e.clientY - p.y;
+    p.x = e.clientX; p.y = e.clientY;
+    // CATIA: meio = mover · meio + esquerdo/direito = girar · meio + clique esquerdo/direito, depois arrastar = zoom
+    if (e.pointerType === 'mouse' && (e.buttons & 4)) {
+      const chord = e.buttons & 3;
+      p.chorded = true;
+      if (chord && !p.chord) p.chordMove = 0;
+      if (!chord && p.chord && p.chordMove < 4) p.zoomMode = true;
+      p.chord = chord;
+      if (chord) { p.chordMove += Math.abs(dx) + Math.abs(dy); st.R = m3(rotX(dy * 0.008), m3(rotY(dx * 0.008), st.R)); }
+      else if (p.zoomMode) st.zoom = Math.min(200, Math.max(0.05, st.zoom * Math.exp(-dy * 0.01)));
+      else { st.pan[0] += 2 * dx / box.clientWidth; st.pan[1] -= 2 * dy / box.clientHeight; }
+      redraw();
+      return;
+    }
+    if (e.pointerType === 'mouse' && p.chorded) { p.zoomMode = false; p.chord = 0; return; }
+    if (ptr.size >= 2) {
+      const [a, b] = [...ptr.values()], d = Math.hypot(a.x - b.x, a.y - b.y);
+      if (pinch) st.zoom = Math.min(200, Math.max(0.05, st.zoom * d / pinch));
+      pinch = d;
+    } else if (p.pan) { st.pan[0] += 2 * dx / box.clientWidth; st.pan[1] -= 2 * dy / box.clientHeight; }
+    else st.R = m3(rotX(dy * 0.008), m3(rotY(dx * 0.008), st.R));
+    redraw();
+  });
+  canvas.addEventListener('wheel', e => { e.preventDefault(); st.zoom = Math.min(200, Math.max(0.05, st.zoom * Math.exp(-e.deltaY * 0.0012))); redraw(); }, {passive: false});
+  canvas.addEventListener('dblclick', e => { if (onPick) onPick(pick(e.clientX, e.clientY), true); });
+  const ro = new ResizeObserver(redraw); ro.observe(box);
+  const api = {
+    view: name => { st.R = (VIEWS[name] || VIEWS.iso)(); st.zoom = 1; st.pan = [0, 0]; st.ct = model.center; redraw(); },
+    fit: () => { st.zoom = 1; st.pan = [0, 0]; st.ct = model.center; redraw(); },
+    // centraliza e enquadra um conjunto de faixas de triângulos (a rotação passa a ser em torno dele)
+    focus: ranges => {
+      const mn = [Infinity, Infinity, Infinity], mx = [-Infinity, -Infinity, -Infinity], p = model.pos;
+      for (const [a, n] of ranges) for (let i = a * 3; i < (a + n) * 3; i++) { const k = i % 3; if (p[i] < mn[k]) mn[k] = p[i]; if (p[i] > mx[k]) mx[k] = p[i]; }
+      if (mn[0] === Infinity) return;
+      const r = Math.hypot(mx[0] - mn[0], mx[1] - mn[1], mx[2] - mn[2]) / 2 || model.radius;
+      st.ct = [(mn[0] + mx[0]) / 2, (mn[1] + mx[1]) / 2, (mn[2] + mx[2]) / 2];
+      st.zoom = Math.min(200, Math.max(1, 0.8 * model.radius / r)); st.pan = [0, 0];
+      redraw();
+    },
+    toggleEdges: () => { st.edges = !st.edges; redraw(); return st.edges; },
+    select: ranges => { st.sel = ranges || []; redraw(); },
+    destroy: () => { st.dead = true; ro.disconnect(); const x = gl.getExtension('WEBGL_lose_context'); if (x) x.loseContext(); },
+  };
+  redraw();
+  return api;
+}
+function v3dSection(p, ficha = '') {
+  const m = models.get(p.pn);
+  // Sem modelo: quem consulta não vê nada; quem edita vê só o botão para ligar um 3DXML a este PN.
+  if (!m && !p.model) return editing ? `<div class="section"><div class="section-head">${I.cube}<h2>Modelo 3D</h2><span class="muted">${esc(p.pn)} ainda não tem modelo</span>
+    <div class="right"><button class="btn primary sm" data-act="v3d-open">${I.plus}Adicionar 3DXML a ${esc(p.pn)}</button></div></div><div id="v3d" data-part="${esc(p.pn)}" hidden></div></div>` : '';
+  const vb = (v, label) => `<button class="btn sm ghost" data-act="v3d-view" data-view="${v}">${label}</button>`;
+  return `<div class="section"><div class="section-head">${I.cube}<h2>Modelo 3D</h2><span class="muted">${m ? esc(m.name) : '3DXML tesselado, aberto deste computador'}</span>
+    <div class="right">${m ? vb('iso', 'Iso') + vb('frente', 'Frente') + vb('topo', 'Topo') + vb('lado', 'Lado') + `<button class="btn sm ghost" data-act="v3d-edges">Arestas</button><button class="btn sm ghost" data-act="v3d-tree">Componentes</button>` : ''}${p.model ? `<button class="btn sm ghost edit-only" data-act="v3d-remove" data-part="${esc(p.pn)}">Remover 3D</button>` : ''}<button class="btn sm ${p.model ? 'edit-only' : ''}" data-act="v3d-open">${m || p.model ? 'Trocar arquivo' : 'Abrir 3DXML'}</button></div></div>
+    <div class="card v3d ${m ? 'has-model' : ''} ${v3dNoTree ? 'no-tree' : ''}" id="v3d" data-part="${esc(p.pn)}">${m ? `<div class="v3d-tree" id="v3dTree"><div class="label">Componentes</div>${m.nodes.filter(n => !n.parent && n.all.length).map(n => vtRows(n, 0)).join('')}</div>
+      <div class="v3d-stage" id="v3dStage">${ficha}<div class="v3d-sel" id="v3dSel"></div><div class="v3d-info">${(m.pos.length / 9).toLocaleString('pt-BR')} triângulos · ${plural(m.parts, 'corpo')}</div><div class="v3d-help">como no CATIA: meio = mover · meio + esquerdo = girar · meio + clique esquerdo e arrastar = zoom · clique = selecionar · duplo clique = centralizar</div></div>`
+      : `<div class="v3d-drop" style="cursor:default"><div></div></div>`}</div></div>`;
+}
+function fichaHtml(base, it) {
+  const self = it === base;
+  const coms = self ? partAsmIds(base) : (it.commodities && it.commodities.length ? it.commodities : partAsmIds(base));
+  const comChips = coms.filter(id => idx.asm.has(id)).map(id => { const a = idx.asm.get(id); return `<a class="chip" href="${href('conjunto', id)}">${esc(a.short || a.name)}</a>`; }).join('') || '<span class="faint">—</span>';
+  const D = dattr({part: base.pn, pn: it.pn});
+  const row = (k, v, cls = '') => `<div><dt>${k}</dt><dd class="${cls}">${v}</dd></div>`;
+  return `<div class="ficha"><div class="ficha-h"><span>Ficha técnica</span>${editing ? (self ? editBtn('edit-part', dattr({part: base.pn}), 'Editar ficha') : editBtn('edit-variant', D, 'Editar ficha') + delBtn('delete-variant', D, 'Excluir este PN')) : ''}</div><dl>
+    ${row('PN', esc(it.pn), 'big')}
+    ${it.description ? row('Descrição', esc(it.description)) : ''}
+    ${row('Tipo', kindChip(it.kind) || '<span class="faint">—</span>')}
+    ${self ? '' : row('Base', `<span class="mono">${esc(base.pn)}</span>${kindChip(base.kind)}`)}
+    ${row('Commodity', comChips)}
+    ${row('Efetividade', it.effectivity ? esc(it.effectivity) : '<span class="faint">—</span>')}
+    ${it.notes && !self ? row('Obs.', esc(it.notes)) : ''}
+  </dl></div>`;
+}
+// Página da peça: escolha do PN (o próprio perfil ou um PN que usa ele) + viewer com a ficha técnica
+function partModelsSection(p) {
+  const vars = p.variants || [];
+  const opts = [...(p.model || models.has(p.pn) ? [p] : []), ...vars];
+  const P = dattr({part: p.pn});
+  const addBtns = `<button class="btn primary sm edit-only" data-act="add-variant" ${P}>${I.plus}Adicionar PN que usa ${esc(p.pn)}</button>`;
+  if (!opts.length) return editing ? `<div class="section"><div class="section-head">${I.cube}<h2>Modelos 3D</h2><span class="muted">nenhum PN cadastrado para ${esc(p.pn)}</span><div class="right">${addBtns}</div></div></div>` + v3dSection(p) : '';
+  let sel = v3dPick.get(p.pn);
+  if (!opts.some(o => o.pn === sel)) sel = opts.length === 1 ? opts[0].pn : null;
+  const it = opts.find(o => o.pn === sel);
+  const opt = o => `<button class="pnopt ${o.pn === sel ? 'active' : ''}" data-act="v3d-choose" ${P} data-pn="${esc(o.pn)}"><small>${o === p ? 'Perfil / peça base' : esc(KINDS[o.kind] || 'PN')}${o.model || models.has(o.pn) ? '' : ' · sem 3D'}</small><span class="pn">${esc(o.pn)}</span>${o.description ? `<span class="small muted">${esc(o.description)}</span>` : ''}</button>`;
+  let html = `<div class="section"><div class="section-head">${I.cube}<h2>Modelos 3D</h2><span class="muted">${vars.length ? plural(vars.length, 'PN usa', 'PNs usam') + ' ' + esc(p.pn) : esc(p.pn)}</span><div class="right">${addBtns}</div></div>
+    ${it ? '' : `<div class="pick-hint">${I.info}Escolha o PN que você quer ver.</div>`}
+    <div class="pnsel ${it ? '' : 'big'}">${opts.map(opt).join('')}</div></div>`;
+  if (!it) return html;
+  const ficha = fichaHtml(p, it);
+  return html + `<div class="card ficha-card">${ficha}</div>` + v3dSection(it);   // ficha acima do 3D, nunca por cima dele
+}
+function variantForm(p, v) {
+  const isNew = !v;
+  openForm({
+    title: isNew ? `Novo PN que usa ${p.pn}` : 'Editar ficha técnica',
+    subtitle: isNew ? '' : `${v.pn} · base ${p.pn}`,
+    fields: [
+      {name: 'pn', label: 'PN', required: true, mono: true, half: true, placeholder: 'Ex.: H311542-527'},
+      {name: 'kind', label: 'Tipo', type: 'select', options: KIND_OPTS, half: true},
+      {name: 'description', label: 'Descrição'},
+      {name: 'commodities', label: 'Commodity (uma ou mais)', type: 'checks', options: db.assemblies.map(a => ({value: a.id, label: a.short || a.name}))},
+      {name: 'effectivity', label: 'Efetividade', placeholder: 'Aeronaves / números de série em que se aplica'},
+      {name: 'notes', label: 'Observações', type: 'textarea'},
+      {type: 'model3d', current: v && v.model},
+    ],
+    values: v || {kind: 'fabricado', commodities: partAsmIds(p)},
+    onSubmit: async (val, form) => {
+      const pn = normPn(val.pn);
+      const other = anyItem(pn);
+      if (other && other !== v) return `O PN ${pn} já existe na biblioteca.`;
+      const t = v || {};
+      Object.assign(t, {pn, kind: val.kind, description: val.description, commodities: val.commodities, effectivity: val.effectivity, notes: val.notes});
+      const merr = await attachModel(t, form);
+      if (merr) return merr;
+      if (isNew) { if (!p.variants) p.variants = []; p.variants.push(t); }
+      v3dPick.set(p.pn, pn);
+      commit(isNew ? `${pn} adicionado a ${p.pn}` : 'Ficha técnica atualizada');
+    },
+  });
+}
+function capSection(p) {
+  const caps = p.captures || [];
+  const P = dattr({part: p.pn});
+  if (!caps.length && !editing) return '';
+  return `<div class="section"><div class="section-head">${I.image}<h2>Capturas do MBD</h2><span class="muted">${caps.length ? plural(caps.length, 'captura') + ' · clique para ampliar' : 'vistas do FT&A com as cotas'}</span>
+    <div class="right"><button class="btn primary sm edit-only" data-act="add-capture" ${P}>${I.plus}Adicionar captura</button></div></div>
+    <div class="caps">${caps.map((c, i) => `<div class="cap"><button class="cap-img" data-act="view-capture" ${P} data-i="${i}" title="Ampliar"><img src="${esc(c.img)}" alt="${esc(c.name)}" loading="lazy"></button>
+      <div class="cap-name"><span>${esc(c.name)}</span>${editBtn('edit-capture', P + ` data-i="${i}"`, 'Renomear ou trocar')}${delBtn('delete-capture', P + ` data-i="${i}"`, 'Excluir captura')}</div></div>`).join('')}
+    ${editing ? `<button class="cap ghost" data-act="add-capture" ${P}><span>${I.plus} Adicionar captura<small>ou cole um print aqui na página com Ctrl+V</small></span></button>` : ''}</div></div>`;
+}
+function captureForm(p, i) {
+  const c = i == null ? null : p.captures[i];
+  openForm({
+    title: c ? 'Editar captura' : 'Nova captura do MBD',
+    subtitle: p.pn,
+    fields: [
+      {name: 'name', label: 'Nome da vista', required: true, placeholder: 'Ex.: Vista frontal, Furação'},
+      {name: 'img', label: 'Imagem', type: 'image', max: 1600, hint: 'No CATIA, abra a captura do FT&A, tire um print (Win+Shift+S) e cole aqui com Ctrl+V.'},
+    ],
+    values: c || {name: 'Captura ' + ((p.captures || []).length + 1)},
+    onSubmit: v => {
+      if (!v.img) return 'Cole ou escolha a imagem da captura.';
+      if (!p.captures) p.captures = [];
+      if (c) Object.assign(c, {name: v.name, img: v.img}); else p.captures.push({name: v.name, img: v.img});
+      commit(c ? 'Captura atualizada' : 'Captura adicionada');
+    },
+  });
+}
+const lightbox = document.createElement('dialog');
+lightbox.id = 'lightbox';
+document.body.appendChild(lightbox);
+lightbox.addEventListener('click', e => {
+  if (e.target === lightbox || e.target.closest('[data-lb-close]')) lightbox.close();
+  else if (e.target.tagName === 'IMG') e.target.parentNode.classList.toggle('zoom');
+});
+function showCapture(p, i) {
+  const c = (p.captures || [])[i];
+  if (!c) return;
+  lightbox.innerHTML = `<div class="lb-bar"><b>${esc(p.pn)} · ${esc(c.name)}</b><span class="small faint">clique na imagem para ver em tamanho real</span><button class="btn sm" data-lb-close>Fechar</button></div><div class="lb-body"><img src="${esc(c.img)}" alt="${esc(c.name)}"></div>`;
+  lightbox.showModal();
+}
+// Ctrl+V na página da peça (modo edição) adiciona uma captura direto
+document.addEventListener('paste', async e => {
+  const r = route();
+  if (!editing || r.kind !== 'peca' || $('#dlg').open || lightbox.open) return;
+  const it = [...(e.clipboardData && e.clipboardData.items || [])].find(x => x.type.startsWith('image/'));
+  const p = idx.part.get(r.id);
+  if (!it || !p) return;
+  e.preventDefault();
+  try {
+    const img = await shrinkImage(it.getAsFile(), 1600);
+    if (!p.captures) p.captures = [];
+    p.captures.push({name: 'Captura ' + (p.captures.length + 1), img});
+    commit('Captura adicionada. Use o lápis para dar um nome.');
+  } catch (x) { toast(x.message, true); }
+});
+function vtRows(n, depth) {
+  return `<button class="vt-row" data-act="v3d-select" data-id="${n.id}" style="padding-left:${6 + depth * 14}px">${n.children.length ? I.conjunto : I.cube}<span>${esc(n.name)}</span></button>` + n.children.map(c => vtRows(c, depth + 1)).join('');
+}
+function v3dApplySel(m, scroll) {
+  const n = m.nodes[m.sel];
+  $$('#v3dTree .vt-row').forEach(b => b.classList.toggle('active', +b.dataset.id === m.sel));
+  if (v3d) v3d.select(n ? n.all : []);
+  const lab = $('#v3dSel');
+  if (lab) { lab.textContent = n ? n.name : 'Clique num componente no 3D ou na lista'; lab.classList.toggle('on', !!n); }
+  const act = scroll && $('#v3dTree .vt-row.active');
+  if (act) act.scrollIntoView({block: 'nearest'});
+}
+function mountV3d() {
+  if (v3d) { v3d.destroy(); v3d = null; }
+  const box = $('#v3d');
+  const m = box && models.get(box.dataset.part);
+  if (!m) {
+    const p = box && anyItem(box.dataset.part);
+    if (p && p.model) loadStoredModel(p, box);
+    return;
+  }
+  const onPick = (vi, focus) => {
+    const hit = vi < 0 ? null : m.nodes.find(n => n.ranges.some(([a, c]) => vi >= a && vi < a + c));
+    m.sel = hit ? hit.id : -1;
+    v3dApplySel(m, true);
+    if (focus && v3d) hit ? v3d.focus(hit.all) : v3d.fit();
+  };
+  try { v3d = createViewer($('#v3dStage'), m, onPick); v3dApplySel(m, false); } catch (x) { box.innerHTML = `<div class="v3d-drop"><div><b>Não consegui abrir o 3D</b>${esc(x.message)}</div></div>`; }
+}
+async function v3dLoad(file) {
+  const box = $('#v3d');
+  if (!file || !box) return;
+  const pn = box.dataset.part;
+  box.innerHTML = `<div class="v3d-drop"><div><b>Lendo ${esc(file.name)}…</b></div></div>`;
+  try {
+    const m = await load3dxml(file);
+    models.set(pn, m); modelFail.delete(pn);
+    const p = anyItem(pn);
+    if (editing && p) {
+      if (fs.ok) {
+        try { p.model = {file: await saveModelFile(pn, m), name: m.name, at: new Date().toISOString()}; commit('Modelo 3D guardado na pasta da base'); return; }
+        catch (x) { toast('Não consegui gravar o modelo na pasta: ' + (x && x.message || x), true); }
+      } else toast('Modelo aberto só nesta sessão. Para guardar na peça, conecte a pasta da base em Dados.', true);
+    }
+    renderMain(true);
+  }
+  catch (x) { toast('Não consegui abrir este 3DXML: ' + (x && x.message || x), true); renderMain(true); }
+}
+document.addEventListener('dblclick', e => {
+  const row = e.target.closest && e.target.closest('.vt-row');
+  const b = $('#v3d'), m = row && b && models.get(b.dataset.part);
+  if (!m || !v3d) return;
+  m.sel = +row.dataset.id;
+  v3dApplySel(m, false);
+  v3d.focus(m.nodes[m.sel].all);
+});
+const v3dInput = document.createElement('input');
+v3dInput.type = 'file'; v3dInput.accept = '.3dxml,.3DXML,.3drep'; v3dInput.hidden = true;
+document.body.appendChild(v3dInput);
+v3dInput.addEventListener('change', () => { v3dLoad(v3dInput.files[0]); v3dInput.value = ''; });
+document.addEventListener('dragover', e => { const b = e.target.closest && e.target.closest('#v3d'); if (b) { e.preventDefault(); b.classList.add('over'); } });
+document.addEventListener('dragleave', e => { const b = e.target.closest && e.target.closest('#v3d'); if (b) b.classList.remove('over'); });
+document.addEventListener('drop', e => { const b = e.target.closest && e.target.closest('#v3d'); if (b) { e.preventDefault(); b.classList.remove('over'); v3dLoad(e.dataTransfer.files[0]); } });
+
+/* ---------------- sidebar ---------------- */
+function renderSidebar() {
+  const sb = $('#sidebar');
+  if (!sb.dataset.ready) {
+    sb.dataset.ready = '1';
+    sb.innerHTML = `<div class="tabs" role="tablist">
+        <button data-act="side-tab" data-tab="pecas">Peças <span class="count" id="c-pecas"></span></button>
+        <button data-act="side-tab" data-tab="insertos">Insertos <span class="count" id="c-insertos"></span></button>
+        <button data-act="side-tab" data-tab="parafusos">Parafusos <span class="count" id="c-parafusos"></span></button></div>
+      <div class="side-tools"><div class="side-filter">${I.search}<input id="sideFilter" type="search" placeholder="Filtrar por PN ou descrição…" autocomplete="off" spellcheck="false"></div>
+        <button class="icon-btn sm" data-act="side-all" title="Recolher ou expandir todos os grupos" aria-label="Recolher ou expandir todos os grupos"><svg viewBox="0 0 24 24"><path d="m7 9 5-5 5 5M7 15l5 5 5-5"/></svg></button></div>
+      <div class="side-chips" id="sideChips"></div>
+      <nav class="side-list" id="sideList"></nav><div class="side-foot" id="sideFoot"></div>`;
+    $('#sideFilter').addEventListener('input', ev => { sideFilter = ev.target.value; renderSideList(); });
+  }
+  $$('.tabs button', sb).forEach(b => b.classList.toggle('active', b.dataset.tab === sideTab));
+  $('#c-pecas').textContent = db.parts.length;
+  $('#c-insertos').textContent = db.inserts.length;
+  $('#c-parafusos').textContent = db.screws.length;
+  renderSideList();
+  const btns = {
+    pecas: `<button class="btn sm" data-act="new-part">${I.plus}Peça</button><button class="btn sm" data-act="new-assembly">${I.plus}Commodity</button>`,
+    insertos: `<button class="btn sm" data-act="new-insert">${I.plus}Inserto</button>`,
+    parafusos: `<button class="btn sm" data-act="new-screw">${I.plus}Parafuso</button>`,
+  }[sideTab];
+  $('#sideFoot').innerHTML = `<div class="row edit-only">${btns}</div>` + statusHtml();
+}
+function renderSideList() {
+  const r = route();
+  const f = fold(sideFilter), fa = alnum(sideFilter);
+  const match = (...vals) => !f || vals.some(v => fold(v).includes(f) || (fa && alnum(v).includes(fa)));
+  const item = (kind, pn, meta) => `<a class="litem ${r.kind === kind && r.id === pn ? 'active' : ''}" href="${href(kind, pn)}"><span class="pn">${esc(pn)}</span><span class="meta">${meta}</span></a>`;
+  sideKeys = [];
+  const group = (title, n, body, link, key) => {
+    key = sideTab + ':' + key; sideKeys.push(key);
+    const open = !!f || !sideClosed.has(key);      // com filtro digitado, mostra tudo
+    return `<div class="side-group ${open ? 'open' : ''}"><div class="side-group-head"><button class="tw" data-act="side-group" data-key="${esc(key)}" title="${open ? 'Recolher' : 'Expandir'}" aria-expanded="${open}">${I.chev}</button>${link ? `<a href="${link}">${esc(title)}</a>` : esc(title)}<span class="n">${n}</span></div>${open ? body : ''}</div>`;
+  };
+  $('#sideChips').innerHTML = sideTab === 'pecas' ? `<button class="side-chip ${sidePend ? '' : 'on'}" data-act="side-pend" data-v="">Todas</button><button class="side-chip ${sidePend ? 'on' : ''}" data-act="side-pend" data-v="1">Só sem inserto</button>` : '';
+  let html = '';
+  if (sideTab === 'pecas') {
+    const ids = db.assemblies.map(a => a.id);
+    if (idx.asmParts.has('')) ids.push('');
+    for (const id of ids) {
+      const a = idx.asm.get(id);
+      const list = (idx.asmParts.get(id) || []).filter(p => match(p.pn, p.description, a?.name) && (!sidePend || !p.inserts.length)).sort((x, y) => cmp(x.pn, y.pn));
+      if (!list.length && (f || sidePend)) continue;
+      html += group(a ? a.name : 'Sem commodity', list.length, list.map(p => item('peca', p.pn,
+        p.inserts.length ? plural(p.inserts.length, 'inserto') : '<span class="dot warn" title="Sem inserto"></span>')).join(''), a ? href('conjunto', id) : '', id);
+    }
+  } else {
+    const isIns = sideTab === 'insertos';
+    const arr = (isIns ? db.inserts : db.screws).filter(x => match(x.pn, x.description, x.thread, x.head));
+    const byThread = new Map();
+    arr.forEach(x => pushMap(byThread, x.thread || 'Sem rosca', x));
+    for (const t of [...byThread.keys()].sort(cmp)) {
+      const list = byThread.get(t).sort((a, b) => cmp(a.pn, b.pn));
+      html += group(t === 'Sem rosca' ? t : 'Rosca ' + t, list.length, list.map(x => {
+        const n = ((isIns ? idx.insUse : idx.scrUse).get(x.pn) || []).length;
+        return item(isIns ? 'inserto' : 'parafuso', x.pn, (isIns ? '' : (x.head ? `<b>${esc(x.head)}</b> · ` : '')) + plural(n, 'peça'));
+      }).join(''), '', t);
+    }
+  }
+  $('#sideList').innerHTML = html || `<div class="side-empty">${f ? 'Nada encontrado.' : 'Nenhum item cadastrado.'}</div>`;
+}
+
+/* ---------------- main render ---------------- */
+function render() { renderSidebar(); renderMain(); $('#restoreItem').hidden = !lsGet(KEY + ':backup'); }
+function renderMain(keepScroll) {
+  const keepX = keepScroll ? $('#main').scrollLeft : 0;
+  const r = route();
+  const view = {peca: viewPart, inserto: viewInsert, parafuso: viewScrew, conjunto: viewAssembly}[r.kind];
+  $('#main').innerHTML = `<div class="main-inner"><div class="edit-banner">${I.edit}Modo edição ativo — as alterações ficam salvas neste navegador. Use <b>Dados › Salvar como HTML</b> para compartilhar.</div>${view ? view(r.id) : viewHome()}</div>`;
+  const t = view ? r.id : '';
+  document.title = (t ? t + ' · ' : '') + 'Biblioteca de PNs';
+  $('#main').scrollLeft = keepX;
+  mountV3d();
+}
+
+/* ---------------- global search ---------------- */
+let sr = [], srActive = 0;
+function searchAll(q) {
+  const f = fold(q).trim(), fa = alnum(q);
+  if (!f) return [];
+  const out = [];
+  const score = (pn, ...rest) => {
+    const p = fold(pn), pa = alnum(pn);
+    if (p.startsWith(f) || (fa && pa.startsWith(fa))) return 0;
+    if (p.includes(f) || (fa && pa.includes(fa))) return 1;
+    if (rest.some(v => fold(v).includes(f))) return 2;
+    return -1;
+  };
+  db.parts.forEach(p => (p.variants || []).forEach(v => { const s = score(v.pn, v.description, v.effectivity); if (s >= 0) out.push({kind: 'peca', pn: v.pn, id: p.pn, sub: ['usa ' + p.pn, KINDS[v.kind], v.description].filter(Boolean).join(' · '), s}); }));
+  db.parts.forEach(p => { const s = score(p.pn, p.description, asmNames(p)); if (s >= 0) out.push({kind: 'peca', pn: p.pn, sub: [asmNames(p), p.description].filter(Boolean).join(' · '), s}); });
+  db.inserts.forEach(i => { const s = score(i.pn, i.description, i.thread); if (s >= 0) out.push({kind: 'inserto', pn: i.pn, sub: [i.thread && 'Rosca ' + i.thread, i.description].filter(Boolean).join(' · '), s}); });
+  db.screws.forEach(x => { const s = score(x.pn, x.description, x.head, HEADS[x.head], x.thread); if (s >= 0) out.push({kind: 'parafuso', pn: x.pn, sub: [x.head && `${x.head} · ${HEADS[x.head] || ''}`, x.thread && 'Rosca ' + x.thread, x.description].filter(Boolean).join(' · '), s}); });
+  db.assemblies.forEach(a => { const s = score(a.name, a.description); if (s >= 0) out.push({kind: 'conjunto', pn: a.name, id: a.id, sub: plural((idx.asmParts.get(a.id) || []).length, 'peça'), s}); });
+  return out.sort((a, b) => a.s - b.s || cmp(a.pn, b.pn)).slice(0, 40);
+}
+function renderSearch() {
+  const box = $('#qres'), q = $('#q').value;
+  if (!q.trim()) { box.hidden = true; return; }
+  sr = searchAll(q); srActive = 0;
+  box.hidden = false;
+  box.innerHTML = sr.length ? sr.map((r, i) => `<a class="sr ${i === 0 ? 'active' : ''}" data-i="${i}" ${r.kind === 'peca' && r.id ? `data-base="${esc(r.id)}" data-pick="${esc(r.pn)}"` : ''} href="${href(r.kind, r.id || r.pn)}">${ico(r.kind, 'sm')}<span class="${r.kind === 'conjunto' ? '' : 'pn'}">${esc(r.pn)}</span><span class="small faint grow" style="overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${esc(r.sub)}</span>${tag(r.kind)}</a>`).join('')
+    : `<div class="sr-empty">Nada encontrado para “${esc(q)}”.</div>`;
+}
+function closeSearch() { $('#qres').hidden = true; }
+$('#q').addEventListener('input', renderSearch);
+$('#q').addEventListener('focus', renderSearch);
+$('#q').addEventListener('keydown', e => {
+  const items = $$('#qres .sr');
+  if (e.key === 'ArrowDown' || e.key === 'ArrowUp') {
+    if (!items.length) return;
+    e.preventDefault();
+    srActive = (srActive + (e.key === 'ArrowDown' ? 1 : -1) + items.length) % items.length;
+    items.forEach((el, i) => el.classList.toggle('active', i === srActive));
+    items[srActive].scrollIntoView({block: 'nearest'});
+  } else if (e.key === 'Enter') {
+    if (items[srActive]) { location.hash = items[srActive].getAttribute('href'); finishSearch(); }
+  } else if (e.key === 'Escape') { finishSearch(); }
+});
+$('#qres').addEventListener('click', e => { const r = e.target.closest('.sr'); if (!r) return; if (r.dataset.pick) v3dPick.set(r.dataset.base, r.dataset.pick); finishSearch(); });
+function finishSearch() { $('#q').value = ''; closeSearch(); $('#q').blur(); }
+
+/* ---------------- dialogs / forms ---------------- */
+function openForm(o) {
+  const dlg = $('#dlg');
+  dlg.innerHTML = `<form class="form" novalidate>
+    <div class="form-head"><h3>${esc(o.title)}</h3>${o.subtitle ? `<p class="small muted mono">${esc(o.subtitle)}</p>` : ''}</div>
+    <div class="form-body">${(o.fields || []).map(f => fieldHtml(f, o.values || {})).join('')}</div>
+    <p class="form-error" hidden></p>
+    <div class="form-actions"><button type="button" class="btn ghost" data-close>Cancelar</button><button type="submit" class="btn ${o.danger ? 'danger' : 'primary'}">${esc(o.submit || 'Salvar')}</button></div>
+  </form>`;
+  const form = $('form', dlg), err = $('.form-error', form);
+  $('[data-close]', form).onclick = () => dlg.close();
+  if (o.onInput) { form.addEventListener('input', () => o.onInput(form)); o.onInput(form); }
+  const m3 = $('[data-m3d]', form);
+  if (m3) {
+    const file = $('[data-m3d-file]', form), lab = $('[data-m3d-label]', form);
+    m3.onclick = () => {
+      if (!fs.ok && window.showDirectoryPicker) { lab.textContent = 'Primeiro conecte a pasta da base (Dados › Conectar pasta da base), depois escolha o 3DXML.'; connectBase(); return; }
+      file.click();
+    };
+    file.onchange = async () => {
+      const f = file.files[0]; file.value = '';
+      if (!f) return;
+      lab.textContent = 'Lendo ' + f.name + '…';
+      try { form._model = await load3dxml(f); lab.textContent = `${f.name} · ${(form._model.pos.length / 9).toLocaleString('pt-BR')} triângulos. Será guardado ao salvar.`; }
+      catch (x) { form._model = null; lab.textContent = 'Não consegui ler: ' + (x && x.message || x); }
+    };
+  }
+  $$('.imgpick', form).forEach(box => {
+    const field = box.parentNode, hidden = form.elements[box.dataset.img], file = $('input[type=file]', field), clr = $('[data-img-clear]', field);
+    const show = () => {
+      box.innerHTML = hidden.value ? `<img src="${esc(hidden.value)}" alt="">` : `<span>${I.image}Cole uma imagem (Ctrl+V) ou clique para escolher</span>`;
+      clr.hidden = !hidden.value;
+    };
+    const load = async f => {
+      if (!f || !/^image\//.test(f.type)) return;
+      try { hidden.value = await shrinkImage(f, +box.dataset.max || 720); show(); } catch (x) { err.textContent = x.message; err.hidden = false; }
+    };
+    box.onclick = () => file.click();
+    box.onkeydown = e => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); file.click(); } };
+    box.ondragover = e => e.preventDefault();
+    box.ondrop = e => { e.preventDefault(); load(e.dataTransfer.files[0]); };
+    file.onchange = () => load(file.files[0]);
+    clr.onclick = () => { hidden.value = ''; show(); };
+    form.addEventListener('paste', e => {
+      const it = [...(e.clipboardData && e.clipboardData.items || [])].find(i => i.type.startsWith('image/'));
+      if (it) { e.preventDefault(); load(it.getAsFile()); }
+    });
+    show();
+  });
+  form.onsubmit = async ev => {
+    ev.preventDefault();
+    const v = {};
+    for (const f of o.fields || []) {
+      if (!f.name) continue;
+      if (f.type === 'checks') { v[f.name] = $$(`input[name="${f.name}"]:checked`, form).map(x => x.value); continue; }
+      const el = form.elements[f.name];
+      v[f.name] = f.type === 'checkbox' ? el.checked : el.value.trim();
+      if (f.required && !v[f.name]) { err.textContent = `Preencha o campo “${f.label}”.`; err.hidden = false; el.focus(); return; }
+    }
+    let res;
+    const btn = $('[type=submit]', form);
+    btn.disabled = true;
+    try { res = await o.onSubmit(v, form); } catch (x) { res = String(x && x.message || x); }
+    btn.disabled = false;
+    if (typeof res === 'string') { err.textContent = res; err.hidden = false; return; }
+    dlg.close();
+  };
+  dlg.showModal();
+  const first = form.querySelector('.form-body input:not([disabled]):not([readonly]):not([type=checkbox]), .form-body select, .form-body textarea');
+  if (first) first.focus(); else $('[type=submit]', form).focus();
+}
+function fieldHtml(f, vals) {
+  const v = vals[f.name] ?? '';
+  const id = 'f_' + f.name;
+  if (f.type === 'info') return `<div class="form-info">${f.html}</div>`;
+  if (f.type === 'model3d') return `<div class="field"><span class="field-label">Modelo 3D deste PN (3DXML tesselado)</span>
+    <div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap"><button type="button" class="btn sm" data-m3d>${I.cube}Escolher 3DXML…</button><span class="small muted" data-m3d-label>${f.current ? 'Atual: ' + esc(f.current.name || f.current.file) : 'Nenhum modelo guardado'}</span></div>
+    <input type="file" accept=".3dxml,.3DXML" hidden data-m3d-file><span class="field-hint" style="display:block">O modelo é guardado em base/modelos com o nome do PN e abre sozinho na página dele.</span></div>`;
+  if (f.type === 'image') return `<div class="field"><span class="field-label">${esc(f.label)}</span><div class="imgpick" data-img="${f.name}" data-max="${f.max || 720}" tabindex="0" role="button"></div><input type="hidden" name="${f.name}" value="${esc(v)}"><input type="file" accept="image/*" hidden><span class="field-hint" style="display:block">${esc(f.hint || '')} <button type="button" class="linkbtn" data-img-clear>Remover imagem</button></span></div>`;
+  if (f.type === 'checks') return `<div class="field"><span class="field-label">${esc(f.label)}</span><div class="checks">${f.options.map(o => `<label><input type="checkbox" name="${f.name}" value="${esc(o.value)}" ${(Array.isArray(v) ? v : []).includes(o.value) ? 'checked' : ''}>${esc(o.label)}</label>`).join('')}</div></div>`;
+  if (f.type === 'checkbox') return `<label class="check"><input type="checkbox" name="${f.name}" ${v ? 'checked' : ''}><span>${esc(f.label)}</span></label>`;
+  let ctl;
+  if (f.type === 'select') {
+    const opts = f.options.slice();
+    if (v && !opts.some(o => o.value === v)) opts.push({value: v, label: v});
+    ctl = `<select id="${id}" name="${f.name}">${opts.map(o => `<option value="${esc(o.value)}" ${o.value === v ? 'selected' : ''}>${esc(o.label)}</option>`).join('')}</select>`;
+  } else if (f.type === 'textarea') {
+    ctl = `<textarea id="${id}" name="${f.name}" rows="3" placeholder="${esc(f.placeholder || '')}">${esc(v)}</textarea>`;
+  } else {
+    const list = f.list ? `<datalist id="${id}_l">${f.list.map(x => typeof x === 'string' ? `<option value="${esc(x)}"></option>` : `<option value="${esc(x.value)}">${esc(x.label || '')}</option>`).join('')}</datalist>` : '';
+    ctl = `<input id="${id}" name="${f.name}" type="${f.type === 'password' ? 'password' : 'text'}" value="${esc(v)}" ${f.list ? `list="${id}_l"` : ''} class="${f.mono ? 'mono' : ''}" ${f.readonly ? 'readonly' : ''} autocomplete="off" spellcheck="false" placeholder="${esc(f.placeholder || '')}">${list}`;
+  }
+  return `<label class="field ${f.half ? 'half' : ''}" for="${id}"><span class="field-label">${esc(f.label)}${f.required ? ' <i>*</i>' : ''}</span>${ctl}<span class="field-hint" data-hint="${f.name}">${esc(f.hint || '')}</span></label>`;
+}
+function setHint(form, name, text, warn) {
+  const h = form.querySelector(`[data-hint="${name}"]`);
+  if (h) { h.textContent = text || ''; h.classList.toggle('warn', !!warn); }
+}
+function confirmBox(title, html, submit, fn) {
+  openForm({title, danger: true, submit, fields: [{type: 'info', html}], onSubmit: () => { fn(); }});
+}
+const HEAD_OPTS = [{value: '', label: '—'}, ...Object.entries(HEADS).map(([k, l]) => ({value: k, label: `${k} · ${l}`}))];
+const insertOptions = () => db.inserts.slice().sort((a, b) => cmp(a.pn, b.pn)).map(i => ({value: i.pn, label: [i.thread && 'Rosca ' + i.thread, i.description].filter(Boolean).join(' · ')}));
+const screwOptions = thread => db.screws.slice().sort((a, b) => ((b.thread === thread) - (a.thread === thread)) || cmp(a.pn, b.pn))
+  .map(s => ({value: s.pn, label: [s.head, s.thread && 'Rosca ' + s.thread, s.description].filter(Boolean).join(' · ')}));
+function lockFields(form, names, lock) { names.forEach(n => { form.elements[n].disabled = lock; }); }
+
+function asmIdByName(name) {
+  name = (name || '').trim();
+  if (!name) return '';
+  let a = db.assemblies.find(x => fold(x.name) === fold(name));
+  if (!a) {
+    let id = slug(name), n = 2;
+    while (db.assemblies.some(x => x.id === id)) id = slug(name) + '-' + n++;
+    a = {id, name, description: ''};
+    db.assemblies.push(a);
+  }
+  return a.id;
+}
+
+/* --- edit password --- */
+const UNLOCK_KEY = 'biblioteca-pn:unlock';
+const hex2buf = h => new Uint8Array(h.match(/../g).map(x => parseInt(x, 16)));
+const buf2hex = b => [...new Uint8Array(b)].map(x => x.toString(16).padStart(2, '0')).join('');
+async function pwHash(pwd, salt, iterations) {
+  const key = await crypto.subtle.importKey('raw', new TextEncoder().encode(pwd), 'PBKDF2', false, ['deriveBits']);
+  return buf2hex(await crypto.subtle.deriveBits({name: 'PBKDF2', hash: 'SHA-256', salt: hex2buf(salt), iterations}, key, 256));
+}
+const ssGet = k => { try { return sessionStorage.getItem(k); } catch (_) { return null; } };
+const ssSet = (k, v) => { try { sessionStorage.setItem(k, v); } catch (_) {} };
+let unlockedHash = ssGet(UNLOCK_KEY);
+const isUnlocked = () => !db.editLock || unlockedHash === db.editLock.hash;
+function requireUnlock(then) {
+  if (isUnlocked()) return then();
+  openForm({
+    title: 'Senha de edição',
+    subtitle: 'Só quem tem a senha pode alterar a biblioteca.',
+    submit: 'Liberar edição',
+    fields: [{name: 'pwd', label: 'Senha', type: 'password', required: true}],
+    onSubmit: async v => {
+      const L = db.editLock;
+      if (!window.crypto || !crypto.subtle) return 'Este navegador não consegue verificar a senha. Use o Edge ou o Chrome.';
+      if (await pwHash(v.pwd, L.salt, L.iterations) !== L.hash) return 'Senha incorreta.';
+      unlockedHash = L.hash; ssSet(UNLOCK_KEY, L.hash);
+      setTimeout(then, 0);
+    },
+  });
+}
+function setEditing(on) {
+  editing = on;
+  if (on) regrantBase();
+  $('#editToggle').checked = on;
+  document.body.classList.toggle('editing', on);
+  renderMain(true);
+}
+function passwordForm() {
+  openForm({
+    title: 'Trocar senha de edição',
+    fields: [{name: 'p1', label: 'Nova senha', type: 'password', required: true}, {name: 'p2', label: 'Repita a nova senha', type: 'password', required: true}],
+    onSubmit: async v => {
+      if (v.p1.length < 4) return 'Use pelo menos 4 caracteres.';
+      if (v.p1 !== v.p2) return 'As duas senhas não são iguais.';
+      const salt = buf2hex(crypto.getRandomValues(new Uint8Array(16))), iterations = 200000;
+      db.editLock = {salt, iterations, hash: await pwHash(v.p1, salt, iterations)};
+      unlockedHash = db.editLock.hash; ssSet(UNLOCK_KEY, unlockedHash);
+      commit('Senha de edição alterada');
+    },
+  });
+}
+
+// grava o 3DXML escolhido no formulário como modelo do PN (peça, inserto ou parafuso)
+async function attachModel(item, form) {
+  const m = form && form._model;
+  if (!m || !item) return '';
+  if (!fs.ok) return 'Para guardar o 3D, conecte antes a pasta da base (Dados › Conectar pasta da base).';
+  try { item.model = {file: await saveModelFile(item.pn, m), name: m.name, at: new Date().toISOString()}; }
+  catch (x) { return 'Não consegui gravar o modelo na pasta: ' + (x && x.message || x); }
+  models.set(item.pn, m); modelFail.delete(item.pn);
+  return '';
+}
+
+/* --- part --- */
+function partForm(p, asmName) {
+  const isNew = !p, r = route();
+  let defIds = asmName ? db.assemblies.filter(a => a.name === asmName).map(a => a.id) : [];
+  if (isNew && !defIds.length && r.kind === 'conjunto' && idx.asm.has(r.id)) defIds = [r.id];
+  if (isNew && !defIds.length && r.kind === 'peca' && idx.part.has(r.id)) defIds = partAsmIds(idx.part.get(r.id));
+  openForm({
+    title: isNew ? 'Nova peça' : 'Editar peça',
+    fields: [
+      {name: 'pn', label: 'PN da peça', required: true, mono: true, placeholder: 'Ex.: CDPA689'},
+      {name: 'description', label: 'Descrição', placeholder: 'Ex.: Painel lateral do bin'},
+      {name: 'kind', label: 'Tipo', type: 'select', options: KIND_OPTS, half: true},
+      {name: 'effectivity', label: 'Efetividade', half: true, placeholder: 'Aeronaves / números de série'},
+      {name: 'assemblies', label: 'Commodities (uma ou mais)', type: 'checks', options: db.assemblies.map(a => ({value: a.id, label: a.short || a.name}))},
+      {name: 'newAsm', label: 'Outra commodity (nova)', placeholder: 'Deixe vazio, ou digite o nome para criar'},
+      {name: 'notes', label: 'Observações', type: 'textarea'},
+      {type: 'model3d', current: p && p.model},
+    ],
+    values: isNew ? {assemblies: defIds} : {pn: p.pn, description: p.description, kind: p.kind, effectivity: p.effectivity, assemblies: partAsmIds(p), notes: p.notes},
+    onSubmit: async (v, form) => {
+      const pn = normPn(v.pn);
+      const ids = [...v.assemblies];
+      if (v.newAsm) ids.push(asmIdByName(v.newAsm));
+      if (isNew && idx.part.has(pn)) {
+        // PN já cadastrado: em vez de recusar, entra também nas commodities marcadas
+        const ex = idx.part.get(pn), add = ids.filter(id => !(ex.assemblies || []).includes(id));
+        if (!add.length) return `${pn} já está cadastrada em ${asmNames(ex)}. Marque outra commodity para adicioná-la lá também.`;
+        setAsms(ex, [...(ex.assemblies || []), ...add]);
+        commit(`${pn} já existia: adicionada a ${add.map(id => db.assemblies.find(a => a.id === id).name).join(', ')}`);
+        go('peca', pn);
+        return;
+      }
+      if (!isNew && pn !== p.pn && idx.part.has(pn)) return `Já existe uma peça com o PN ${pn}.`;
+      const t = p || {pn, inserts: []};
+      t.pn = pn; t.description = v.description; t.kind = v.kind; t.effectivity = v.effectivity; setAsms(t, ids); t.notes = v.notes;
+      const merr = await attachModel(t, form);
+      if (merr) return merr;
+      if (isNew) db.parts.push(t);
+      commit(isNew ? `Peça ${pn} criada` : 'Peça atualizada');
+      go('peca', pn);
+    },
+  });
+}
+/* --- part ↔ insert indication --- */
+function entryForm(p, e) {
+  const isNew = !e;
+  const cur = e ? idx.ins.get(e.insert) : null;
+  openForm({
+    title: isNew ? 'Indicar inserto' : 'Editar indicação de inserto',
+    subtitle: p.pn + (e ? ' › ' + e.insert : ''),
+    fields: [
+      {name: 'insert', label: 'PN do inserto', required: true, mono: true, list: isNew ? insertOptions() : null, readonly: !isNew, placeholder: 'Ex.: CDIN07-08-06'},
+      {name: 'thread', label: 'Rosca', list: THREADS, half: true, placeholder: 'Ex.: 8-32'},
+      {name: 'insDesc', label: 'Descrição do inserto', half: true},
+      {name: 'preferred', label: 'Preferencial — primeira escolha por boa prática', type: 'checkbox'},
+      {name: 'note', label: 'Observação desta indicação', type: 'textarea', placeholder: 'Ex.: usar em região de borda; requer adesivo…'},
+      {type: 'model3d', current: cur && cur.model},
+    ],
+    values: e ? {insert: e.insert, thread: cur?.thread, insDesc: cur?.description, preferred: e.preferred, note: e.note} : {},
+    onInput: form => {
+      const pn = normPn(form.elements.insert.value), ex = idx.ins.get(pn);
+      lockFields(form, ['thread', 'insDesc'], !!ex);
+      if (ex) { form.elements.thread.value = ex.thread || ''; form.elements.insDesc.value = ex.description || ''; }
+      setHint(form, 'insert', !pn ? 'Escolha um inserto do catálogo ou digite um PN novo.' : ex ? (isNew ? 'Inserto do catálogo.' : 'Para alterar rosca/descrição, edite o inserto na página dele.') : 'Novo inserto — será adicionado ao catálogo.');
+    },
+    onSubmit: async (v, form) => {
+      const pn = normPn(v.insert);
+      if (isNew && p.inserts.some(x => x.insert === pn)) return `${pn} já está indicado para esta peça.`;
+      if (!idx.ins.has(pn)) {
+        if (!v.thread) return 'Informe a rosca do novo inserto.';
+        db.inserts.push({pn, thread: v.thread, description: v.insDesc, notes: ''});
+      }
+      const merr = await attachModel(db.inserts.find(x => x.pn === pn), form);
+      if (merr) return merr;
+      const t = e || {insert: pn, screws: []};
+      t.preferred = !!v.preferred; t.note = v.note;
+      if (isNew) p.inserts.push(t);
+      commit(isNew ? `${pn} indicado para ${p.pn}` : 'Indicação atualizada');
+    },
+  });
+}
+function entryScrewForm(p, e) {
+  const ins = idx.ins.get(e.insert);
+  openForm({
+    title: 'Adicionar parafuso',
+    subtitle: `${p.pn} › ${e.insert}${ins?.thread ? ' (rosca ' + ins.thread + ')' : ''}`,
+    fields: [
+      {name: 'screw', label: 'PN do parafuso', required: true, mono: true, list: screwOptions(ins?.thread), placeholder: 'Ex.: NAS514P832-3P'},
+      {name: 'head', label: 'Cabeça', type: 'select', options: HEAD_OPTS, half: true},
+      {name: 'thread', label: 'Rosca', list: THREADS, half: true},
+      {name: 'desc', label: 'Descrição do parafuso'},
+    ],
+    values: {thread: ins?.thread || ''},
+    onInput: form => {
+      const pn = normPn(form.elements.screw.value), ex = idx.scr.get(pn);
+      lockFields(form, ['head', 'thread', 'desc'], !!ex);
+      if (ex) {
+        const sel = form.elements.head;
+        if (ex.head && ![...sel.options].some(o => o.value === ex.head)) sel.add(new Option(ex.head, ex.head));
+        sel.value = ex.head || ''; form.elements.thread.value = ex.thread || ''; form.elements.desc.value = ex.description || '';
+      }
+      const th = form.elements.thread.value.trim();
+      const mismatch = ins?.thread && th && th !== ins.thread;
+      setHint(form, 'screw', mismatch ? `Atenção: rosca do parafuso (${th}) difere da rosca do inserto (${ins.thread}).`
+        : !pn ? 'Escolha do catálogo ou digite um PN novo.' : ex ? 'Parafuso do catálogo.' : 'Novo parafuso — será adicionado ao catálogo.', mismatch);
+    },
+    onSubmit: v => {
+      const pn = normPn(v.screw);
+      if (e.screws.includes(pn)) return `${pn} já está indicado para este inserto.`;
+      if (!idx.scr.has(pn)) db.screws.push({pn, head: v.head, thread: v.thread, description: v.desc, notes: ''});
+      e.screws.push(pn);
+      commit(`${pn} adicionado`);
+    },
+  });
+}
+/* --- catalog: insert / screw --- */
+function catalogForm(kind, item) {
+  const isIns = kind === 'inserto', isNew = !item;
+  const list = isIns ? db.inserts : db.screws, map = isIns ? idx.ins : idx.scr;
+  const fields = [
+    {name: 'pn', label: isIns ? 'PN do inserto' : 'PN do parafuso', required: true, mono: true},
+    ...(isIns ? [] : [{name: 'head', label: 'Cabeça', type: 'select', options: HEAD_OPTS, half: true}]),
+    {name: 'thread', label: 'Rosca', list: THREADS, half: !isIns, required: isIns, placeholder: 'Ex.: 8-32'},
+    {name: 'description', label: 'Descrição'},
+    {name: 'notes', label: 'Observações', type: 'textarea'},
+    {type: 'model3d', current: item && item.model},
+  ];
+  openForm({
+    title: (isNew ? 'Novo ' : 'Editar ') + (isIns ? 'inserto' : 'parafuso'),
+    fields, values: item || {},
+    onSubmit: async (v, form) => {
+      const pn = normPn(v.pn);
+      if (map.has(pn) && (isNew || pn !== item.pn)) return `Já existe ${isIns ? 'um inserto' : 'um parafuso'} com o PN ${pn}.`;
+      const t = item || {pn};
+      const old = t.pn;
+      Object.assign(t, {pn, thread: v.thread, description: v.description, notes: v.notes});
+      if (!isIns) t.head = v.head;
+      const merr = await attachModel(t, form);
+      if (merr) return merr;
+      if (isNew) list.push(t);
+      else if (old !== pn) db.parts.forEach(p => p.inserts.forEach(e => {
+        if (isIns) { if (e.insert === old) e.insert = pn; } else e.screws = e.screws.map(s => s === old ? pn : s);
+      }));
+      commit(isNew ? `${pn} adicionado ao catálogo` : 'Catálogo atualizado');
+      go(kind, pn);
+    },
+  });
+}
+function assemblyForm(a) {
+  openForm({
+    title: a ? 'Editar commodity' : 'Nova commodity',
+    fields: [
+      {name: 'name', label: 'Nome', required: true, placeholder: 'Ex.: Overhead Bin', half: true},
+      {name: 'short', label: 'Nome no botão (opcional)', placeholder: 'Ex.: OHBin', half: true},
+      {name: 'description', label: 'Descrição'},
+      {name: 'art', label: 'Desenho', type: 'select', options: Object.entries(ART_LABEL).map(([value, label]) => ({value, label}))},
+      {name: 'image', label: 'Foto ou print (opcional, substitui o desenho)', type: 'image', hint: 'Tire um print (Win+Shift+S) e cole aqui com Ctrl+V, ou arraste um arquivo.'},
+    ],
+    values: a ? {...a, art: artKey(a)} : {art: 'generic'},
+    onInput: a ? null : form => {
+      const sel = form.elements.art;
+      if (!sel.dataset.wired) { sel.dataset.wired = '1'; sel.addEventListener('change', () => { sel.dataset.touched = '1'; }); }
+      if (!sel.dataset.touched) sel.value = artGuess(form.elements.name.value);
+    },
+    onSubmit: v => {
+      if (db.assemblies.some(x => x !== a && fold(x.name) === fold(v.name))) return 'Já existe uma commodity com esse nome.';
+      const t = a || db.assemblies.find(x => x.id === asmIdByName(v.name));
+      Object.assign(t, {name: v.name, short: v.short, description: v.description, art: v.art, image: v.image});
+      commit(a ? 'Commodity atualizada' : `Commodity ${v.name} criada`);
+      if (!a) go('conjunto', t.id);
+    },
+  });
+}
+
+/* ---------------- actions ---------------- */
+const getEntry = d => { const p = idx.part.get(d.part); return {p, e: p && p.inserts.find(x => x.insert === d.ins)}; };
+const ACT = {
+  'toggle-sidebar': () => {
+    const app = $('#app');
+    if (matchMedia('(max-width:900px)').matches) { app.classList.toggle('side-open'); return; }
+    lsSet(SIDE_KEY, app.classList.toggle('side-collapsed') ? '1' : '');
+  },
+  'toggle-theme': () => {
+    const root = document.documentElement;
+    const dark = root.dataset.theme ? root.dataset.theme === 'dark' : matchMedia('(prefers-color-scheme: dark)').matches;
+    root.dataset.theme = dark ? 'light' : 'dark';
+    lsSet(THEME_KEY, root.dataset.theme);
+  },
+  'toggle-menu': () => { const m = $('#dataMenu'); m.hidden = !m.hidden; },
+  'side-tab': d => { sideTab = d.tab; renderSidebar(); },
+  'side-group': d => { sideClosed.has(d.key) ? sideClosed.delete(d.key) : sideClosed.add(d.key); saveSideClosed(); renderSideList(); },
+  'side-all': () => { const anyOpen = sideKeys.some(k => !sideClosed.has(k)); sideKeys.forEach(k => anyOpen ? sideClosed.add(k) : sideClosed.delete(k)); saveSideClosed(); renderSideList(); },
+  'side-pend': d => { sidePend = !!d.v; renderSideList(); },
+  'copy': d => copyText(d.text, `${d.text} copiado`),
+  'copy-table': d => {
+    const p = idx.part.get(d.part);
+    const rows = [['Peça', 'Rosca', 'Inserto', 'Preferencial', 'Parafuso', 'Cabeça'], ...comboRows(p).map(r => [r.part, r.thread, r.insert, r.preferred ? 'Sim' : '', r.screw, r.head])];
+    copyText(rows.map(r => r.join('\t')).join('\n'), 'Tabela copiada — cole no Excel');
+  },
+  'add-capture': d => captureForm(idx.part.get(d.part), null),
+  'edit-capture': d => captureForm(idx.part.get(d.part), +d.i),
+  'view-capture': d => showCapture(idx.part.get(d.part), +d.i),
+  'delete-capture': d => confirmBox('Excluir captura?', 'A imagem será removida desta peça.', 'Excluir', () => {
+    idx.part.get(d.part).captures.splice(+d.i, 1); commit('Captura excluída');
+  }),
+  'connect-base': () => requireUnlock(connectBase),
+  'save-base': () => requireUnlock(saveBase),
+  'v3d-tree': () => { v3dNoTree = !v3dNoTree; const b = $('#v3d'); if (b) b.classList.toggle('no-tree', v3dNoTree); },
+  'v3d-remove': d => confirmBox('Remover o modelo 3D deste PN?', 'Ele deixa de abrir o 3D sozinho. O arquivo do modelo continua na pasta base/modelos.', 'Remover', () => {
+    const p = anyItem(d.part); delete p.model; models.delete(p.pn); commit('Modelo 3D removido');
+  }),
+  'v3d-open': () => {
+    if (editing && !fs.ok && window.showDirectoryPicker) { toast('Primeiro conecte a pasta da base, para o 3D ficar guardado. Depois clique de novo em Adicionar 3DXML.', true); connectBase(); return; }
+    v3dInput.click();
+  },
+  'v3d-choose': d => { v3dPick.set(d.part, d.pn); renderMain(true); },
+  'add-variant': d => variantForm(idx.part.get(d.part), null),
+  'edit-variant': d => variantForm(idx.part.get(d.part), findVariant(d.pn)),
+  'delete-variant': d => confirmBox('Excluir este PN?', `<b class="mono">${esc(d.pn)}</b> sai da lista de PNs que usam <b class="mono">${esc(d.part)}</b>. O arquivo do modelo 3D continua na pasta base/modelos.`, 'Excluir', () => {
+    const p = idx.part.get(d.part); p.variants = (p.variants || []).filter(v => v.pn !== d.pn); models.delete(d.pn); commit('PN excluído');
+  }),
+  'v3d-select': d => { const b = $('#v3d'), m = b && models.get(b.dataset.part); if (!m) return; m.sel = m.sel === +d.id ? -1 : +d.id; v3dApplySel(m, false); },
+  'v3d-view': d => { if (v3d) v3d.view(d.view); },
+  'v3d-edges': () => { if (v3d) v3d.toggleEdges(); },
+  'new-part': d => partForm(null, d.asm),
+  'add-existing-part': d => {
+    const a = idx.asm.get(d.asm);
+    const others = db.parts.filter(p => !(p.assemblies || []).includes(d.asm)).sort((x, y) => cmp(x.pn, y.pn));
+    openForm({
+      title: `Adicionar peça existente a ${a.name}`,
+      fields: [{name: 'pn', label: 'PN da peça', required: true, mono: true, list: others.map(p => ({value: p.pn, label: [asmNames(p), p.description].filter(Boolean).join(' · ')})),
+        hint: others.length ? 'Escolha uma peça já cadastrada em outra commodity. Ela passa a aparecer nas duas, com os mesmos insertos e parafusos.' : 'Todas as peças cadastradas já estão nesta commodity.'}],
+      submit: 'Adicionar',
+      onSubmit: v => {
+        const p = idx.part.get(normPn(v.pn));
+        if (!p) return `${normPn(v.pn)} ainda não existe na biblioteca. Use “Peça nova”.`;
+        if ((p.assemblies || []).includes(d.asm)) return `${p.pn} já está em ${a.name}.`;
+        setAsms(p, [...(p.assemblies || []), d.asm]);
+        commit(`${p.pn} adicionada a ${a.name}`);
+      },
+    });
+  },
+  'tree-part': d => { openParts.has(d.part) ? openParts.delete(d.part) : openParts.add(d.part); renderMain(true); },
+  'tree-ins': d => { closedIns.has(d.key) ? closedIns.delete(d.key) : closedIns.add(d.key); renderMain(true); },
+  'edit-part': d => partForm(idx.part.get(d.part)),
+  'delete-part': d => confirmBox('Excluir peça?', `A peça <b class="mono">${esc(d.part)}</b> e suas indicações serão removidas. Insertos e parafusos continuam no catálogo.`, 'Excluir', () => {
+    db.parts = db.parts.filter(p => p.pn !== d.part); commit(`Peça ${d.part} excluída`); go('', '');
+  }),
+  'new-assembly': () => assemblyForm(null),
+  'edit-assembly': d => assemblyForm(idx.asm.get(d.id)),
+  'delete-assembly': d => {
+    const a = idx.asm.get(d.id), n = (idx.asmParts.get(d.id) || []).length;
+    confirmBox('Excluir commodity?', `A commodity <b>${esc(a.name)}</b> será excluída.${n ? ` As ${plural(n, 'peça')} dela <b>não</b> serão apagadas: ficarão em “Sem commodity”.` : ''}`, 'Excluir', () => {
+      db.assemblies = db.assemblies.filter(x => x.id !== d.id);
+      db.parts.forEach(p => setAsms(p, (p.assemblies || []).filter(id => id !== d.id)));
+      commit('Commodity excluída'); go('', '');
+    });
+  },
+  'add-entry': d => entryForm(idx.part.get(d.part), null),
+  'edit-entry': d => { const {p, e} = getEntry(d); if (e) entryForm(p, e); },
+  'remove-entry': d => confirmBox('Remover inserto desta peça?', `<b class="mono">${esc(d.ins)}</b> deixará de ser indicado para <b class="mono">${esc(d.part)}</b> (o inserto continua no catálogo).`, 'Remover', () => {
+    const {p} = getEntry(d); p.inserts = p.inserts.filter(x => x.insert !== d.ins); commit('Indicação removida');
+  }),
+  'add-entry-screw': d => { const {p, e} = getEntry(d); if (e) entryScrewForm(p, e); },
+  'remove-entry-screw': d => { const {e} = getEntry(d); if (!e) return; e.screws = e.screws.filter(s => s !== d.scr); commit(`${d.scr} removido de ${d.ins}`); },
+  'new-insert': () => catalogForm('inserto', null),
+  'edit-insert': d => catalogForm('inserto', idx.ins.get(d.ins)),
+  'delete-insert': d => {
+    const n = (idx.insUse.get(d.ins) || []).length;
+    confirmBox('Excluir inserto do catálogo?', `<b class="mono">${esc(d.ins)}</b> será excluído${n ? ` e removido de ${plural(n, 'peça')}` : ''}.`, 'Excluir', () => {
+      db.inserts = db.inserts.filter(i => i.pn !== d.ins);
+      db.parts.forEach(p => { p.inserts = p.inserts.filter(e => e.insert !== d.ins); });
+      commit('Inserto excluído'); go('', '');
+    });
+  },
+  'new-screw': () => catalogForm('parafuso', null),
+  'edit-screw': d => catalogForm('parafuso', idx.scr.get(d.scr)),
+  'delete-screw': d => {
+    const n = (idx.scrUse.get(d.scr) || []).length;
+    confirmBox('Excluir parafuso do catálogo?', `<b class="mono">${esc(d.scr)}</b> será excluído${n ? ` e removido de ${plural(n, 'indicação', 'indicações')}` : ''}.`, 'Excluir', () => {
+      db.screws = db.screws.filter(s => s.pn !== d.scr);
+      db.parts.forEach(p => p.inserts.forEach(e => { e.screws = e.screws.filter(s => s !== d.scr); }));
+      commit('Parafuso excluído'); go('', '');
+    });
+  },
+  'export-json': () => download(JSON.stringify(db, null, 2), `biblioteca-pn_${today()}.json`, 'application/json'),
+  'export-csv': () => download(toCsv(), `biblioteca-pn_${today()}.csv`, 'text/csv;charset=utf-8'),
+  'export-html': exportHtml,
+  'import': () => requireUnlock(() => $('#fileInput').click()),
+  'restore-backup': () => requireUnlock(() => {
+    let st;
+    try { st = JSON.parse(lsGet(KEY + ':backup')); } catch (_) { return; }
+    if (!st || !st.data) return;
+    confirmBox('Recuperar edições antigas?', `Volta para as edições salvas neste navegador em <b>${fmtDate(st.data.updatedAt)}</b>, feitas sobre uma versão anterior do arquivo. O que existe só na versão nova (por exemplo, commodities novas) deixa de aparecer enquanto você usar essas edições.`, 'Recuperar', () => {
+      if (!st.data.editLock && db.editLock) st.data.editLock = db.editLock;
+      db = normalize(st.data); lsDel(KEY + ':backup'); commit('Edições antigas recuperadas'); go('', '');
+    });
+  }),
+  'change-password': () => requireUnlock(passwordForm),
+  'reset': () => requireUnlock(() => confirmBox('Descartar alterações locais?', 'Todas as alterações feitas neste navegador e ainda não salvas em um HTML serão perdidas. A biblioteca volta aos dados gravados neste arquivo.', 'Descartar', () => {
+    lsDel(KEY); loadDb(); rebuild(); render(); toast('Dados do arquivo restaurados');
+  })),
+};
+document.addEventListener('click', ev => {
+  let b = ev.target.closest('[data-act]');
+  // A PN link inside a clickable tree node navigates instead of toggling the node.
+  const inner = ev.target.closest('a[href]');
+  if (b && inner && b !== inner && b.contains(inner)) b = null;
+  if (!ev.target.closest('.menu-wrap') || (b && b.closest('.menu'))) $('#dataMenu').hidden = true;
+  if (!ev.target.closest('.search')) closeSearch();
+  if (!b) return;
+  const fn = ACT[b.dataset.act];
+  if (!fn) return;
+  ev.preventDefault();
+  fn(b.dataset, b);
+});
+
+/* ---------------- import / export ---------------- */
+function download(content, name, type) {
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(new Blob([content], {type}));
+  a.download = name;
+  document.body.appendChild(a); a.click();
+  setTimeout(() => { URL.revokeObjectURL(a.href); a.remove(); }, 1500);
+}
+function exportHtml() {
+  const doc = new DOMParser().parseFromString(PRISTINE, 'text/html');
+  doc.getElementById('seed-data').textContent = '\n' + JSON.stringify(db, null, 1).replace(/</g, '\\u003c') + '\n';
+  download('<!DOCTYPE html>\n' + doc.documentElement.outerHTML, `Biblioteca_PN_${today()}.html`, 'text/html;charset=utf-8');
+  toast('HTML gerado com os dados atuais — envie este arquivo para a equipe');
+}
+const CSV_COLS = ['Commodity', 'PN Peça', 'Descrição Peça', 'PN Inserto', 'Rosca', 'Descrição Inserto', 'Preferencial', 'PN Parafuso', 'Cabeça', 'Descrição Parafuso', 'Observação'];
+function toCsv() {
+  const rows = [];
+  // Rosca é exportada como ="8-32" para o Excel não converter em data.
+  const th = t => t ? `="${t}"` : '';
+  for (const p of db.parts.slice().sort((a, b) => cmp(a.pn, b.pn))) {
+    const a = partAsmIds(p).map(id => idx.asm.get(id).name).join(' / ');
+    if (!p.inserts.length) { rows.push([a, p.pn, p.description, '', '', '', '', '', '', '', '']); continue; }
+    for (const e of p.inserts) {
+      const i = idx.ins.get(e.insert) || {};
+      const base = [a, p.pn, p.description, e.insert, th(i.thread), i.description, e.preferred ? 'Sim' : ''];
+      if (!e.screws.length) rows.push([...base, '', '', '', e.note]);
+      e.screws.forEach(s => { const x = idx.scr.get(s) || {}; rows.push([...base, s, x.head, x.description, e.note]); });
+    }
+  }
+  const cell = v => { v = String(v ?? ''); return /[;"\r\n]/.test(v) ? '"' + v.replace(/"/g, '""') + '"' : v; };
+  return '﻿' + [CSV_COLS, ...rows].map(r => r.map(cell).join(';')).join('\r\n');
+}
+function parseCsv(text) {
+  text = text.replace(/^﻿/, '');
+  const head = text.split(/\r?\n/, 1)[0];
+  const cnt = c => head.split(c).length - 1;
+  const sep = [';', ',', '\t'].sort((a, b) => cnt(b) - cnt(a))[0];
+  const rows = []; let row = [], cell = '', q = false;
+  for (let i = 0; i < text.length; i++) {
+    const c = text[i];
+    if (q) { if (c === '"') { if (text[i + 1] === '"') { cell += '"'; i++; } else q = false; } else cell += c; }
+    else if (c === '"') q = true;
+    else if (c === sep) { row.push(cell); cell = ''; }
+    else if (c === '\n' || c === '\r') { if (c === '\r' && text[i + 1] === '\n') i++; row.push(cell); rows.push(row); row = []; cell = ''; }
+    else cell += c;
+  }
+  if (cell !== '' || row.length) { row.push(cell); rows.push(row); }
+  return rows.filter(r => r.some(x => x.trim() !== ''));
+}
+function importCsv(text) {
+  const rows = parseCsv(text);
+  if (rows.length < 2) return toast('CSV sem linhas de dados', true);
+  const key = s => fold(s).replace(/[^a-z0-9]+/g, ' ').trim();
+  const H = rows[0].map(key);
+  const col = (...names) => H.findIndex(h => names.includes(h));
+  const C = {asm: col('commodity', 'conjunto'), part: col('pn peca', 'peca'), pdesc: col('descricao peca'), ins: col('pn inserto', 'inserto'), thr: col('rosca'),
+    idesc: col('descricao inserto'), pref: col('preferencial'), scr: col('pn parafuso', 'parafuso'), head: col('cabeca'), sdesc: col('descricao parafuso'), note: col('observacao', 'obs')};
+  if (C.part < 0) return toast('Coluna “PN Peça” não encontrada no CSV', true);
+  const data = rows.slice(1);
+  confirmBox('Importar CSV?', `${plural(data.length, 'linha')} serão <b>mescladas</b> com a biblioteca atual: itens novos são criados e descrições preenchidas no CSV substituem as existentes. Nada é apagado.`, 'Importar', () => {
+    let np = 0, ni = 0, ns = 0;
+    for (const r of data) {
+      const g = k => C[k] >= 0 ? String(r[C[k]] ?? '').trim().replace(/^="(.*)"$/, '$1').trim() : '';
+      const pn = normPn(g('part'));
+      if (!pn) continue;
+      let p = db.parts.find(x => x.pn === pn);
+      if (!p) { p = {pn, description: '', assembly: '', assemblies: [], notes: '', inserts: []}; db.parts.push(p); np++; }
+      if (g('pdesc')) p.description = g('pdesc');
+      if (g('asm')) setAsms(p, [...(p.assemblies || []), ...g('asm').split('/').map(x => asmIdByName(x))]);
+      const ipn = normPn(g('ins'));
+      if (!ipn) continue;
+      let i = db.inserts.find(x => x.pn === ipn);
+      if (!i) { i = {pn: ipn, thread: '', description: '', notes: ''}; db.inserts.push(i); ni++; }
+      if (g('thr')) i.thread = g('thr');
+      if (g('idesc')) i.description = g('idesc');
+      let e = p.inserts.find(x => x.insert === ipn);
+      if (!e) { e = {insert: ipn, preferred: false, note: '', screws: []}; p.inserts.push(e); }
+      if (g('pref')) e.preferred = /^(s|sim|x|1|true|yes|y)$/i.test(g('pref'));
+      if (g('note')) e.note = g('note');
+      const spn = normPn(g('scr'));
+      if (!spn) continue;
+      let s = db.screws.find(x => x.pn === spn);
+      if (!s) { s = {pn: spn, head: '', thread: i.thread, description: '', notes: ''}; db.screws.push(s); ns++; }
+      if (g('head')) s.head = g('head').toUpperCase();
+      if (g('sdesc')) s.description = g('sdesc');
+      if (!e.screws.includes(spn)) e.screws.push(spn);
+    }
+    commit(`Importado: ${np} peça(s), ${ni} inserto(s), ${ns} parafuso(s) novos`);
+  });
+}
+function importJson(text) {
+  let d;
+  try { d = JSON.parse(text); } catch (_) { return toast('Arquivo JSON inválido', true); }
+  if (!d || !Array.isArray(d.parts)) return toast('JSON não parece ser uma Biblioteca de PNs', true);
+  confirmBox('Substituir a biblioteca?', `Os dados atuais serão <b>substituídos</b> pelo conteúdo do arquivo (${plural(d.parts.length, 'peça')}).`, 'Substituir', () => {
+    if (!d.editLock && db.editLock) d.editLock = db.editLock;
+    db = normalize(d); commit('Biblioteca importada'); go('', '');
+  });
+}
+$('#fileInput').addEventListener('change', async ev => {
+  const f = ev.target.files[0];
+  ev.target.value = '';
+  if (!f) return;
+  const text = await f.text();
+  if (/\.json$/i.test(f.name) || text.trim().startsWith('{')) importJson(text); else importCsv(text);
+});
+
+/* ---------------- misc ---------------- */
+let toastTimer;
+function toast(msg, warn) {
+  const t = $('#toast');
+  t.innerHTML = (warn ? '' : I.check) + `<span>${esc(msg)}</span>`;
+  t.hidden = false;
+  clearTimeout(toastTimer);
+  toastTimer = setTimeout(() => { t.hidden = true; }, warn ? 5000 : 2600);
+}
+async function copyText(text, msg) {
+  try { await navigator.clipboard.writeText(text); }
+  catch (_) {
+    const ta = document.createElement('textarea');
+    ta.value = text; ta.style.position = 'fixed'; ta.style.opacity = '0';
+    document.body.appendChild(ta); ta.select();
+    try { document.execCommand('copy'); } catch (_) {}
+    ta.remove();
+  }
+  toast(msg || 'Copiado');
+}
+document.addEventListener('keydown', e => {
+  const typing = /^(INPUT|TEXTAREA|SELECT)$/.test(document.activeElement?.tagName) || $('#dlg').open;
+  if (!typing && (e.key === '/' || (e.key.toLowerCase() === 'k' && (e.ctrlKey || e.metaKey)))) { e.preventDefault(); $('#q').focus(); }
+  if (e.key.toLowerCase() === 'k' && (e.ctrlKey || e.metaKey) && typing && !$('#dlg').open) { e.preventDefault(); $('#q').focus(); }
+});
+$('#editToggle').addEventListener('change', e => {
+  const on = e.target.checked;
+  if (on && !isUnlocked()) { e.target.checked = false; requireUnlock(() => setEditing(true)); return; }
+  setEditing(on);
+});
+document.addEventListener('keydown', e => {
+  if ((e.key === 'Enter' || e.key === ' ') && e.target.matches && e.target.matches('.node[data-act]')) { e.preventDefault(); e.target.click(); }
+});
+window.addEventListener('hashchange', () => {
+  const k = route().kind;
+  if (k === 'peca' || k === 'conjunto') sideTab = 'pecas';
+  if (k === 'inserto') sideTab = 'insertos';
+  if (k === 'parafuso') sideTab = 'parafusos';
+  $('#app').classList.remove('side-open');
+  render();
+  $('#main').scrollTop = 0;
+});
+window.addEventListener('storage', ev => { if (ev.key === KEY) { loadDb(); rebuild(); render(); } });
+
+/* ---------------- boot ---------------- */
+if (lsGet(SIDE_KEY)) $('#app').classList.add('side-collapsed');
+const savedTheme = lsGet(THEME_KEY);
+if (savedTheme) document.documentElement.dataset.theme = savedTheme;
+loadDb(); rebuild();
+const k0 = route().kind;
+sideTab = k0 === 'inserto' ? 'insertos' : k0 === 'parafuso' ? 'parafusos' : 'pecas';
+render();
+idb('readonly', st => st.get(DIR_KEY)).then(async h => {
+  if (!h || !h.queryPermission) return;
+  try {
+    if (await h.queryPermission({mode: 'readwrite'}) === 'granted') { fs.dir = h; fs.ok = true; if (source === 'local') saveBase(); }
+    else fs.pending = h;
+  } catch (_) { fs.pending = h; }
+  renderSidebar();
+});
+if (backedUp) toast('Os dados deste arquivo são mais novos que as edições salvas neste navegador. Elas foram guardadas em Dados › Recuperar edições antigas.', true);
+})();
+</script>
+</body>
+</html>

@@ -1,0 +1,243 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Inspetor 3DXML</title>
+<style>
+:root{
+  --bg:#f3f5f8; --surface:#fff; --surface-2:#f8f9fb; --border:#e2e6ec; --border-strong:#c9d0da;
+  --text:#101828; --text-2:#475467; --text-3:#7a8698;
+  --accent:#2457e6; --accent-soft:#e9effd;
+  --ok:#12805c; --ok-soft:#e3f6ee; --warn:#b54708; --warn-soft:#fef3e7; --bad:#d92d20; --bad-soft:#fdeceb;
+  --mono:ui-monospace,"Cascadia Mono",Consolas,Menlo,monospace;
+  --sans:"Segoe UI Variable Text","Segoe UI",system-ui,-apple-system,Roboto,Arial,sans-serif;
+  color-scheme:light;
+}
+@media (prefers-color-scheme: dark){
+  :root{
+    --bg:#0f1218; --surface:#171b23; --surface-2:#1c212b; --border:#2a3140; --border-strong:#3a4356;
+    --text:#e8ecf3; --text-2:#aab3c2; --text-3:#7d8799;
+    --accent:#6b8fff; --accent-soft:#1e2a4a;
+    --ok:#3ccb8f; --ok-soft:#12332a; --warn:#f0a03c; --warn-soft:#3a2a14; --bad:#ff6b5e; --bad-soft:#3d1d1b;
+    color-scheme:dark;
+  }
+}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--text);font:14px/1.5 var(--sans)}
+main{max-width:980px;margin:0 auto;padding:28px 20px 60px}
+h1{margin:0 0 4px;font-size:26px}
+p{margin:0 0 14px;color:var(--text-2)}
+[hidden]{display:none!important}
+#drop{border:2px dashed var(--border-strong);border-radius:14px;background:var(--surface);padding:34px 20px;text-align:center;cursor:pointer;color:var(--text-2);font-size:15px}
+#drop:hover,#drop.over,#drop:focus-visible{border-color:var(--accent);background:var(--accent-soft);outline:none}
+#drop b{color:var(--text)}
+.verdicts{display:grid;gap:10px;margin:18px 0}
+.v{display:flex;gap:12px;align-items:flex-start;padding:12px 16px;border-radius:12px;border:1px solid var(--border);background:var(--surface)}
+.v .dot{width:26px;height:26px;border-radius:50%;display:grid;place-items:center;font-weight:800;color:#fff;flex:none;font-size:14px}
+.v.ok{background:var(--ok-soft);border-color:transparent}.v.ok .dot{background:var(--ok)}
+.v.warn{background:var(--warn-soft);border-color:transparent}.v.warn .dot{background:var(--warn)}
+.v.bad{background:var(--bad-soft);border-color:transparent}.v.bad .dot{background:var(--bad)}
+.v b{display:block;font-size:15px}
+.v span{color:var(--text-2);font-size:13px}
+.cols{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px}
+@media (max-width:800px){.cols{grid-template-columns:minmax(0,1fr)}}
+.card{background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:12px 14px;min-width:0}
+.card h2{margin:0 0 8px;font-size:11px;letter-spacing:.07em;text-transform:uppercase;color:var(--text-3)}
+table{width:100%;border-collapse:collapse;font:12.5px var(--mono)}
+td{padding:2px 0;vertical-align:top;overflow-wrap:anywhere}
+td:last-child{text-align:right;color:var(--text-2);white-space:nowrap;padding-left:10px}
+.bar{display:flex;gap:10px;align-items:center;margin-top:16px;flex-wrap:wrap}
+button{font:inherit;font-weight:600;height:34px;padding:0 14px;border-radius:9px;border:1px solid var(--border);background:var(--surface);color:var(--text);cursor:pointer}
+button:hover{border-color:var(--accent)}
+.small{font-size:12.5px;color:var(--text-3)}
+#fname{font-family:var(--mono);font-weight:700}
+</style>
+</head>
+<body>
+<main>
+  <h1>Inspetor 3DXML</h1>
+  <p>Arraste um arquivo <b>.3dxml</b> para a caixa abaixo. Ele é lido <b>só neste computador</b>: nada é enviado para lugar nenhum.
+     O resultado diz se a Biblioteca de PNs consegue mostrar o 3D e as anotações (MBD) desse tipo de arquivo.</p>
+  <div id="drop" tabindex="0" role="button"><b>Arraste o .3dxml aqui</b> ou clique para escolher</div>
+  <input type="file" id="file" hidden>
+  <section id="out" hidden>
+    <p style="margin:18px 0 0">Arquivo: <span id="fname"></span> <span class="small" id="fsize"></span></p>
+    <div class="verdicts" id="verdicts"></div>
+    <div class="cols">
+      <div class="card"><h2>Arquivos dentro do 3DXML</h2><table id="tFiles"></table></div>
+      <div class="card"><h2>Tipos de representação (xsi:type / format)</h2><table id="tTypes"></table></div>
+      <div class="card"><h2>Elementos XML mais comuns</h2><table id="tTags"></table></div>
+    </div>
+    <div class="bar"><button id="copy">Copiar relatório</button><span class="small">Para pedir ajuda: tire uma foto desta tela, ou copie o relatório (ele tem só nomes e contagens, sem geometria).</span></div>
+  </section>
+  <p id="err" class="v bad" hidden></p>
+</main>
+<script>
+(() => {
+'use strict';
+const $ = s => document.querySelector(s);
+const esc = s => String(s).replace(/[&<>"]/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+const fmtSize = n => n > 1048576 ? (n / 1048576).toFixed(1) + ' MB' : n > 1024 ? (n / 1024).toFixed(0) + ' KB' : n + ' B';
+const LIMIT = 96 * 1048576;      // lê no máximo 96 MB de cada arquivo interno
+let reportText = '';
+
+function readZip(buf) {
+  const dv = new DataView(buf.buffer, buf.byteOffset, buf.byteLength);
+  let i = buf.length - 22;
+  const min = Math.max(0, buf.length - 22 - 65535);
+  for (; i >= min; i--) if (dv.getUint32(i, true) === 0x06054b50) break;
+  if (i < min) throw new Error('Não consegui ler o arquivo como ZIP.');
+  let n = dv.getUint16(i + 10, true), off = dv.getUint32(i + 16, true);
+  if ((n === 0xffff || off === 0xffffffff) && i >= 20 && dv.getUint32(i - 20, true) === 0x07064b50) {
+    const z = Number(dv.getBigUint64(i - 20 + 8, true));
+    n = Number(dv.getBigUint64(z + 32, true)); off = Number(dv.getBigUint64(z + 48, true));
+  }
+  const dec = new TextDecoder();
+  const out = [];
+  let p = off;
+  for (let k = 0; k < n && p + 46 <= buf.length; k++) {
+    if (dv.getUint32(p, true) !== 0x02014b50) break;
+    const method = dv.getUint16(p + 10, true);
+    let csize = dv.getUint32(p + 20, true), usize = dv.getUint32(p + 24, true);
+    const nlen = dv.getUint16(p + 28, true), elen = dv.getUint16(p + 30, true), clen = dv.getUint16(p + 32, true);
+    let lho = dv.getUint32(p + 42, true);
+    const name = dec.decode(buf.subarray(p + 46, p + 46 + nlen));
+    let x = p + 46 + nlen; const xe = x + elen;
+    while (x + 4 <= xe) {                      // zip64 extra field
+      const id = dv.getUint16(x, true), sz = dv.getUint16(x + 2, true);
+      if (id === 1) {
+        let q = x + 4;
+        if (usize === 0xffffffff) { usize = Number(dv.getBigUint64(q, true)); q += 8; }
+        if (csize === 0xffffffff) { csize = Number(dv.getBigUint64(q, true)); q += 8; }
+        if (lho === 0xffffffff) { lho = Number(dv.getBigUint64(q, true)); }
+      }
+      x += 4 + sz;
+    }
+    if (!name.endsWith('/')) out.push({name, method, csize, usize, lho});
+    p += 46 + nlen + elen + clen;
+  }
+  return out;
+}
+async function entryBytes(buf, e) {
+  const dv = new DataView(buf.buffer, buf.byteOffset, buf.byteLength);
+  const start = e.lho + 30 + dv.getUint16(e.lho + 26, true) + dv.getUint16(e.lho + 28, true);
+  const comp = buf.subarray(start, start + e.csize);
+  if (e.method === 0) return comp.subarray(0, LIMIT);
+  if (e.method !== 8) throw new Error('compactação não suportada (método ' + e.method + ')');
+  const reader = new Blob([comp]).stream().pipeThrough(new DecompressionStream('deflate-raw')).getReader();
+  const chunks = []; let total = 0;
+  for (;;) {
+    const {done, value} = await reader.read();
+    if (done) break;
+    chunks.push(value); total += value.length;
+    if (total >= LIMIT) { reader.cancel(); break; }
+  }
+  const outb = new Uint8Array(total); let o = 0;
+  for (const c of chunks) { outb.set(c, o); o += c.length; }
+  return outb;
+}
+function looksXml(b) {
+  let i = 0;
+  if (b[0] === 0xef && b[1] === 0xbb && b[2] === 0xbf) i = 3;
+  if ((b[0] === 0xff && b[1] === 0xfe) || (b[0] === 0xfe && b[1] === 0xff)) return true;
+  while (i < 64 && (b[i] === 32 || b[i] === 9 || b[i] === 10 || b[i] === 13)) i++;
+  return b[i] === 0x3c;
+}
+function decodeText(b) {
+  if (b[0] === 0xff && b[1] === 0xfe) return new TextDecoder('utf-16le').decode(b);
+  if (b[0] === 0xfe && b[1] === 0xff) return new TextDecoder('utf-16be').decode(b);
+  return new TextDecoder('utf-8').decode(b);
+}
+const bump = (m, k, n = 1) => m.set(k, (m.get(k) || 0) + n);
+const ext = n => { const m = /\.([A-Za-z0-9]+)$/.exec(n); return m ? m[1].toLowerCase() : '(sem extensão)'; };
+
+async function inspect(file) {
+  const buf = new Uint8Array(await file.arrayBuffer());
+  const isZip = buf[0] === 0x50 && buf[1] === 0x4b;
+  const entries = isZip ? readZip(buf) : [{name: file.name, method: -1, csize: buf.length, usize: buf.length}];
+  const byExt = new Map(), tags = new Map(), types = new Map(), problems = [];
+  let xmlReps = 0, binReps = 0, native = 0, truncated = 0;
+  for (const e of entries) {
+    const x = ext(e.name);
+    const g = byExt.get(x) || {n: 0, size: 0, xml: 0, bin: 0};
+    g.n++; g.size += e.usize; byExt.set(x, g);
+    let data;
+    try { data = e.method === -1 ? buf.subarray(0, LIMIT) : await entryBytes(buf, e); }
+    catch (err) { problems.push(e.name + ': ' + err.message); continue; }
+    if (data.length < e.usize) truncated++;
+    if (/^(catpart|catproduct|catdrawing|cgr|model|catshape)$/.test(x)) native++;
+    if (!looksXml(data)) { g.bin++; if (x === '3drep') binReps++; continue; }
+    g.xml++;
+    if (x === '3drep') xmlReps++;
+    const text = decodeText(data);
+    let m;
+    const reTag = /<([A-Za-z_][\w.\-]*:)?([A-Za-z_][\w.\-]*)/g;
+    while ((m = reTag.exec(text))) bump(tags, m[2]);
+    const reType = /xsi:type\s*=\s*"([^"]+)"/g;
+    while ((m = reType.exec(text))) bump(types, 'xsi:type=' + m[1]);
+    const reFmt = /\bformat\s*=\s*"([^"]+)"/g;
+    while ((m = reFmt.exec(text))) bump(types, 'format=' + m[1]);
+  }
+  const has = (map, re) => [...map.keys()].filter(k => re.test(k));
+  const tess = has(types, /polyhedral/i).length > 0 || (tags.has('Faces') && (tags.has('VertexBuffer') || tags.has('Positions')));
+  const faceCount = tags.get('Face') || 0;
+  const annRe = /annot|fta|pmi|capture|dimension|toler|datum|leader|textrep|\btext\b|note|flagnote|gdt|roughness|weld/i;
+  const ann = [...has(types, annRe), ...has(tags, annRe)];
+  const lines = has(types, /polyline|wire|curve/i).concat(has(tags, /^Polyline|^PolylineSet|^Wire/i));
+
+  const V = [];
+  if (tess && !binReps && !native) V.push(['ok', 'Geometria: dá para mostrar', `Malha de triângulos em XML (tesselada)${faceCount ? ', ' + faceCount.toLocaleString('pt-BR') + ' faces' : ''}. É o tipo que o viewer da biblioteca consegue ler.`]);
+  else if (tess) V.push(['warn', 'Geometria: dá para mostrar em parte', `Há malha em XML, mas também ${binReps + native} arquivo(s) em formato binário/nativo que o navegador não lê.`]);
+  else if (binReps || native) V.push(['bad', 'Geometria: este tipo de exportação não dá para ler', 'A geometria está em formato binário/nativo do CATIA. Tente exportar o 3DXML com geometria tesselada (opção de exportação “para revisão”/tessellated, sem dados exatos/authoring).']);
+  else V.push(['bad', 'Geometria: não encontrei', 'Não achei malha de triângulos nem representação 3D conhecida neste arquivo.']);
+
+  if (ann.length) V.push(['ok', 'MBD / anotações: encontrei sinais', 'Elementos que parecem anotações: ' + ann.slice(0, 8).map(k => k.replace(/^xsi:type=/, '')).join(', ') + (ann.length > 8 ? '…' : '') + '.']);
+  else if (lines.length) V.push(['warn', 'MBD / anotações: talvez', 'Não há elementos com nome de anotação, mas há linhas (' + lines.slice(0, 4).map(k => k.replace(/^xsi:type=/, '')).join(', ') + '), que podem ser as cotas desenhadas ou só arestas.']);
+  else V.push(['warn', 'MBD / anotações: não encontrei', 'Nada que pareça anotação. Confira se a exportação do 3DXML inclui o FT&A (3D Annotations) e as capturas.']);
+
+  if (truncated) V.push(['warn', 'Arquivo grande', truncated + ' arquivo(s) interno(s) foram lidos só em parte (limite de 96 MB cada). As contagens podem estar incompletas.']);
+  if (problems.length) V.push(['warn', 'Partes que não consegui abrir', problems.slice(0, 3).join(' · ')]);
+
+  const top = (map, n) => [...map.entries()].sort((a, b) => b[1] - a[1]).slice(0, n);
+  const rowsFiles = [...byExt.entries()].sort((a, b) => b[1].size - a[1].size).map(([k, g]) => [`.${k} ×${g.n}${g.bin ? ' (binário)' : g.xml ? ' (XML)' : ''}`, fmtSize(g.size)]);
+  const rowsTypes = top(types, 14).map(([k, v]) => [k, v.toLocaleString('pt-BR')]);
+  const rowsTags = top(tags, 14).map(([k, v]) => [k, v.toLocaleString('pt-BR')]);
+  const tbl = rows => rows.length ? rows.map(r => `<tr><td>${esc(r[0])}</td><td>${esc(r[1])}</td></tr>`).join('') : '<tr><td class="small">(nada)</td><td></td></tr>';
+
+  $('#fname').textContent = file.name;
+  $('#fsize').textContent = `${fmtSize(file.size)} · ${isZip ? 'ZIP com ' + entries.length + ' arquivo(s)' : 'XML sem compactação'}`;
+  $('#verdicts').innerHTML = V.map(([c, t, d]) => `<div class="v ${c}"><span class="dot">${c === 'ok' ? '✓' : c === 'warn' ? '!' : '×'}</span><div><b>${esc(t)}</b><span>${esc(d)}</span></div></div>`).join('');
+  $('#tFiles').innerHTML = tbl(rowsFiles);
+  $('#tTypes').innerHTML = tbl(rowsTypes);
+  $('#tTags').innerHTML = tbl(rowsTags);
+  $('#out').hidden = false;
+  const sec = (title, rows) => title + '\n' + rows.map(r => '  ' + r[0] + '  ' + r[1]).join('\n');
+  reportText = ['INSPETOR 3DXML', `${fmtSize(file.size)} · ${isZip ? 'ZIP, ' + entries.length + ' arquivos' : 'XML'}`,
+    ...V.map(([c, t, d]) => `[${c}] ${t} — ${d}`), sec('ARQUIVOS', rowsFiles), sec('TIPOS', top(types, 40).map(([k, v]) => [k, v])), sec('ELEMENTOS', top(tags, 60).map(([k, v]) => [k, v]))].join('\n');
+}
+
+async function run(file) {
+  if (!file) return;
+  $('#err').hidden = true; $('#out').hidden = true;
+  $('#drop').innerHTML = 'Lendo <b>' + esc(file.name) + '</b>…';
+  try { await inspect(file); }
+  catch (e) { $('#err').textContent = 'Não consegui ler este arquivo: ' + (e && e.message || e); $('#err').hidden = false; }
+  $('#drop').innerHTML = '<b>Arraste outro .3dxml aqui</b> ou clique para escolher';
+}
+const drop = $('#drop'), input = $('#file');
+drop.onclick = () => input.click();
+drop.onkeydown = e => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); input.click(); } };
+input.onchange = () => { run(input.files[0]); input.value = ''; };
+['dragover', 'dragenter'].forEach(t => document.addEventListener(t, e => { e.preventDefault(); drop.classList.add('over'); }));
+['dragleave', 'drop'].forEach(t => document.addEventListener(t, e => { e.preventDefault(); drop.classList.remove('over'); }));
+document.addEventListener('drop', e => run(e.dataTransfer.files[0]));
+$('#copy').onclick = async () => {
+  try { await navigator.clipboard.writeText(reportText); $('#copy').textContent = 'Copiado'; }
+  catch (_) { $('#copy').textContent = 'Não deu para copiar: tire uma foto'; }
+  setTimeout(() => { $('#copy').textContent = 'Copiar relatório'; }, 2500);
+};
+})();
+</script>
+</body>
+</html>

@@ -1,0 +1,132 @@
+# Biblioteca de PNs — insertos e parafusos por peça
+
+Ferramenta de consulta (e cadastro) que mostra, para cada **peça (PN)**, qual **inserto** é usado
+por boa prática e quais **parafusos** são indicados com esse inserto.
+
+```
+Commodity (ex.: Overhead Bin)
+└── Peça            CDPA689
+    └── Rosca       8-32
+        ├── Inserto CDIN07-08-06  ★ preferencial (opcional)
+        │   ├── Parafuso NAS514P832-3P  (CSK · escareada)
+        │   └── Parafuso NAS8302-3      (PAN · panela)
+        └── Inserto CDIN23-08S
+```
+
+## Como usar
+
+A tela inicial mostra um botão para cada **commodity** (OHBin, Galley, Lavatory, Windscreen, Wardrobe).
+Dentro de cada uma, as peças aparecem numa **árvore de cima para baixo** (como um organograma): commodity → peças →
+INSERTO (rosca) → insertos → parafusos. Clique numa peça para abrir os insertos; clique num inserto
+para recolher ou mostrar os parafusos. O ícone ↗ no canto de cada caixa abre a página de detalhes.
+
+É **um único arquivo**: `Biblioteca_PN.html`. Abra com um duplo clique (Edge/Chrome). Não precisa
+de instalação, servidor nem internet.
+
+| O que fazer | Como |
+|---|---|
+| Achar um PN | Digite na busca do topo (atalho **/** ou **Ctrl+K**). Pode digitar parte do PN, sem hífen (`nas8302`). |
+| Ver onde um inserto/parafuso é usado | Clique no PN do inserto ou parafuso para abrir a página com a seção **Onde é usado**. |
+| Copiar um PN | Passe o mouse sobre o PN e clique no ícone de copiar. |
+| Levar a tabela para o Excel | Na página da peça, use **Copiar tabela** e cole no Excel. |
+| Cadastrar ou editar | Ative o **Modo edição** (topo à direita) e digite a **senha de edição** (peça ao responsável pela biblioteca). Aparecem os botões de adicionar, editar e excluir. A senha vale até fechar a aba. |
+| Compartilhar com a equipe | **Dados › Salvar como HTML** gera um novo arquivo com os dados gravados dentro. Envie esse arquivo ou coloque no SharePoint. |
+
+### Onde ficam os dados?
+
+- Os dados "oficiais" ficam **dentro do próprio HTML** (bloco `<script id="seed-data">`).
+- O que você edita no navegador fica salvo **só no seu navegador** até você usar
+  **Dados › Salvar como HTML**. O aviso laranja na barra lateral lembra disso.
+- **Dados › Descartar alterações locais** volta ao que está gravado no arquivo.
+
+### Cadastro em massa pelo Excel
+
+1. **Dados › Exportar para Excel (CSV)**, ou use o arquivo `modelo_importacao.csv` deste repositório.
+2. Preencha **uma linha por combinação peça × inserto × parafuso**:
+
+   | Commodity | PN Peça | Descrição Peça | PN Inserto | Rosca | Descrição Inserto | Preferencial | PN Parafuso | Cabeça | Descrição Parafuso | Observação |
+   |---|---|---|---|---|---|---|---|---|---|---|
+
+   - `Preferencial`: `Sim` ou vazio.
+   - `Cabeça`: `CSK` (escareada), `PAN` (panela), `HEX`, `FIL`, `SOC`, `TRU`, `WAF` ou outro código.
+   - Uma peça sem inserto ainda pode ter só `Commodity` e `PN Peça`.
+   - Arquivos antigos com a coluna `Conjunto` também são aceitos.
+3. Salve como CSV (separador `;`) e use **Dados › Importar CSV ou JSON**.
+   O CSV é **mesclado**: cria o que é novo e não apaga nada.
+
+> A rosca é exportada como `="8-32"` para o Excel não transformar `8-32` em data.
+> A importação aceita os dois formatos.
+
+**Backup completo:** use **Dados › Exportar JSON**. Ao importar um JSON, a biblioteca inteira é **substituída**.
+
+### Senha de edição
+
+- O **Modo edição**, **Importar** e **Descartar alterações** pedem a senha. Consultar não pede.
+- O arquivo guarda só uma impressão digital criptografada da senha (PBKDF2-SHA256), nunca a senha em si.
+- Para trocar: com o Modo edição ligado, **Dados › Trocar senha de edição**, depois **Salvar como HTML**.
+- A senha evita edições acidentais ou de quem não deve mexer. Quem souber editar código HTML consegue
+  contorná-la; a proteção de verdade é a permissão de escrita na pasta onde o arquivo oficial fica.
+
+### Commodities e imagens
+
+- Cada commodity tem um desenho próprio. No Modo edição, use o lápis no botão da commodity para trocar o
+  nome, o nome curto do botão (ex.: `OHBin`), o desenho, ou colar uma **foto/print** (Ctrl+V) no lugar dele.
+- A imagem é reduzida e guardada dentro do próprio arquivo (não precisa de pasta de imagens).
+
+### Modelo 3D (3DXML)
+
+- Na página de cada peça há o quadro **Modelo 3D**: arraste um `.3dxml` **tesselado** (geometria em XML) e ele abre ali,
+  para girar, mover e dar zoom. O arquivo é lido só no computador e, por enquanto, **não fica salvo** na biblioteca.
+- 3DXML binário (`format=UVR`) e `.cgr` não podem ser lidos pelo navegador. Use o `Inspetor_3DXML.html` para conferir
+  o tipo de exportação de um arquivo.
+
+### Capturas do MBD
+
+- O CATIA não grava o FT&A no 3DXML tesselado, então as cotas entram como **capturas**: na página da peça, com o
+  Modo edição ligado, tire um print da captura do FT&A (Win+Shift+S) e cole com **Ctrl+V** direto na página, ou use
+  **Adicionar captura**. Dê um nome a cada vista pelo lápis.
+- Quem consulta clica na miniatura para ampliar; clicar na imagem ampliada mostra em tamanho real.
+- As capturas ficam salvas na biblioteca. O navegador guarda em torno de 5 MB; use **Salvar como HTML** com frequência.
+
+## Base na pasta (dados e modelos 3D gravados ao lado do HTML)
+
+```
+Biblioteca_PN\
+   Biblioteca_PN.html
+   base\
+      dados.js            <- todas as peças, insertos, parafusos, commodities, capturas
+      modelos\
+         CDPA689.js       <- modelo 3D de cada peça
+```
+
+- Se a pasta `base` estiver **ao lado do HTML**, a biblioteca lê tudo sozinha, em qualquer PC ou na rede.
+  Copie ou mova **a pasta inteira**; o HTML sozinho abre só com os dados embutidos.
+- **Primeira vez (quem edita):** ligue o Modo edição › **Dados › Conectar pasta da base** › escolha a pasta onde
+  está o `Biblioteca_PN.html` › permita a gravação. A pasta `base` é criada na hora.
+- **Depois disso:** cada alteração é gravada sozinha em `base/dados.js` (o aviso no rodapé da barra lateral mostra
+  "Gravado às HH:MM"). Ao abrir de novo, ligar o Modo edição faz o navegador pedir a permissão com um clique.
+- **Modelo 3D:** com a pasta conectada e o Modo edição ligado, arraste o `.3dxml` tesselado na peça. Ele é
+  convertido e guardado em `base/modelos`; daí em diante abre sozinho para todos.
+- **Duas pessoas editando:** se alguém gravou depois que você abriu a página, a biblioteca avisa antes de substituir.
+- Quem só consulta não precisa conectar nada nem saber a senha.
+
+### Tipo, PNs que usam a peça e ficha técnica
+
+- Cada peça tem um **Tipo** (Extrudado, Fabricado, Hardware) e uma **Efetividade**, editáveis pelo lápis da peça.
+- Uma peça-base (por exemplo um perfil extrudado `CDPA...`) pode ter vários **PNs que usam** ela. No Modo edição:
+  **Adicionar PN que usa …** e preencha PN, tipo, descrição, commodities (uma ou mais), efetividade e o 3DXML.
+- Quem consulta abre a peça, **escolhe o PN** na lista e vê o 3D com a **ficha técnica** no canto inferior esquerdo.
+- A busca do topo também encontra esses PNs.
+
+### Mesma peça em mais de uma commodity
+
+- No Modo edição, dentro da árvore de uma commodity: **Peça existente** adiciona ali uma peça que já está cadastrada
+  em outra commodity. Ela aparece nas duas, com os mesmos insertos e parafusos (é a mesma peça, não uma cópia).
+- No lápis da peça, marque ou desmarque as commodities em que ela aparece.
+- Se você tentar criar uma peça com um PN que já existe, ela é adicionada às commodities marcadas em vez de dar erro.
+
+### Barra lateral
+
+- A seta ao lado do nome de cada commodity recolhe ou mostra as peças dela; o botão ao lado do filtro recolhe ou
+  expande todas de uma vez.
+- **Só sem inserto** mostra apenas as peças que ainda não têm inserto indicado.
